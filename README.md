@@ -1,7 +1,7 @@
 # Aruba Mail MCP
 
 Bridge locale tra un client MCP (per esempio Codex) e caselle IMAP con TLS.
-Python 3.11+, SDK MCP ufficiale/FastMCP, trasporto **stdio**. Prima versione: lettura e marcatura come letto. Nessun OAuth, server HTTP o porta pubblica.
+Python 3.11+, SDK MCP ufficiale/FastMCP, trasporti **stdio** e **Streamable HTTP autenticato**. Prima versione: lettura e marcatura come letto. Nessun OAuth richiesto; HTTP opzionale solo con token Bearer.
 
 ## Funzioni
 
@@ -87,3 +87,31 @@ codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/aruba-mail-mcp/.venv/bin/python /
 La build Docker include questi controlli. Le prove reali di connessione, lettura e modifica sono checkpoint separati da eseguire solo con autorizzazione del titolare.
 
 Il supporto Exchange Online/Microsoft 365 non è incluso: il login IMAP basic di questa versione non sostituisce OAuth richiesto da Microsoft.
+
+## Open WebUI — Streamable HTTP
+
+Open WebUI standard usa MCP Streamable HTTP, non stdio. Il bridge espone `/mcp` con Bearer token obbligatorio; non implementa un authorization server OAuth. Il token ha gli stessi permessi delle caselle configurate: istanza personale, non servizio multiutente.
+
+```sh
+./scripts/create-http-token.sh
+./scripts/build-container.sh
+./scripts/run-http-container.sh
+```
+
+`create-http-token.sh` genera un token casuale in `mcp.token` con permessi 600 e non lo stampa. Aprire il file localmente per copiarlo nel campo Bearer di Open WebUI; non inserirlo in chat o in una URL. Riavviare il processo HTTP dopo rotazione del token. Il token è ignorato da Git ed escluso dall'immagine.
+
+Con Open WebUI sullo stesso host: pannello amministrazione → Impostazioni → Strumenti esterni/connessioni (nome dipendente dalla versione) → aggiungi server **MCP Streamable HTTP**, URL `http://127.0.0.1:8000/mcp`, autenticazione **Bearer**, valore del file `mcp.token`. Verificare/scoprire strumenti, abilitare la connessione e usare un modello con tool calling. Non scegliere OAuth. L'accesso ai tool va limitato al solo utente autorizzato a consultare queste caselle.
+
+Se Open WebUI è in Docker, `127.0.0.1` indica il suo container. Usare una rete Docker privata comune: il file `compose.openwebui.yml` avvia solo il bridge, senza pubblicare porte. Collegare anche il container Open WebUI alla stessa rete già esistente e impostare UID/GID dell'utente che possiede i file:
+
+```sh
+export LOCAL_UID="$(id -u)" LOCAL_GID="$(id -g)"
+# La rete ai-local deve già esistere e includere Open WebUI.
+docker compose -f compose.openwebui.yml up -d --build
+```
+
+In questo caso URL `http://aruba-mail:8000/mcp`, stesso Bearer. `ARUBA_MAIL_DOCKER_NETWORK` permette di usare il nome della rete esistente. Il compose non avvia Open WebUI/Ollama e non invia dati a modelli: questi dipendono dal client scelto.
+
+L'HTTP in chiaro è destinato a loopback o rete Docker privata sullo stesso host. Per accesso LAN/remoto serve HTTPS con reverse proxy e host consentiti espliciti (`ARUBA_MAIL_ALLOWED_HOSTS`); non esporre questa porta pubblicamente. Lo script standalone pubblica solo su loopback. Nessuna connessione HTTP già avviata automaticamente da questa configurazione.
+
+Controlli HTTP: autenticazione richiesta anche per discovery, confronto token costante, dimensione richiesta massima 64 KiB, verifica Host/Origin, access log disabilitato. `test_http.py` verifica initialize e tools/list, rifiuto senza token/token errato, limite payload e host non consentito. Il test non contatta caselle reali. La configurazione nell'istanza Open WebUI dell'utente rimane un checkpoint manuale.
