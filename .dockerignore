@@ -1,0 +1,8 @@
+# Only source needed to build; no configuration, email data or Git history.
+**
+!Dockerfile
+!requirements.txt
+!config.py
+!mail_client.py
+!server.py
+!test_mail.py

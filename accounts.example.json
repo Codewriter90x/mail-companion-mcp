@@ -1,0 +1,12 @@
+{
+  "accounts": [
+    {
+      "id": "prima-casella",
+      "email": "",
+      "username": "",
+      "password": "",
+      "imap_host": "imaps.aruba.it",
+      "imap_port": 993
+    }
+  ]
+}
