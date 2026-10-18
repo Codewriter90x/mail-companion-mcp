@@ -27,5 +27,5 @@ exec docker run --rm --init \
   --env "ARUBA_MAIL_ALLOWED_HOSTS=${ARUBA_MAIL_ALLOWED_HOSTS:-127.0.0.1:*,localhost:*,[::1]:*,host.docker.internal:*,aruba-mail:*}" \
   --mount "type=bind,source=$config_file,target=/app/accounts.local.json,readonly" \
   --mount "type=bind,source=$token_file,target=/run/secrets/mcp.token,readonly" \
-  "${ARUBA_MAIL_IMAGE:-aruba-mail-mcp:local}" \
+  "${ARUBA_MAIL_IMAGE:-mail-companion-mcp:local}" \
   --transport streamable-http --host 0.0.0.0 --port 8000

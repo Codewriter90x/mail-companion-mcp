@@ -10,24 +10,24 @@ Serve un account GitHub autorizzato al repository (per un collaboratore, il prop
 
 ```sh
 gh auth login
-gh repo clone Codewriter90x/aruba-mail-mcp
-cd aruba-mail-mcp
+gh repo clone Codewriter90x/mail-companion-mcp
+cd mail-companion-mcp
 ```
 
 Installare e avviare Docker, poi scegliere tra immagine pronta e build locale.
 
 ### Immagine pronta da GHCR
 
-Package: [aruba-mail-mcp](https://github.com/users/Codewriter90x/packages/container/package/aruba-mail-mcp).
-Build e diagnostica: [GitHub Actions](https://github.com/Codewriter90x/aruba-mail-mcp/actions/workflows/container.yml).
+Package: [mail-companion-mcp](https://github.com/users/Codewriter90x/packages/container/package/mail-companion-mcp).
+Build e diagnostica: [GitHub Actions](https://github.com/Codewriter90x/mail-companion-mcp/actions/workflows/container.yml).
 
-L'immagine è `ghcr.io/codewriter90x/aruba-mail-mcp:latest`, con supporto Linux `amd64` e `arm64` (Mac Apple Silicon incluso tramite Docker).
+L'immagine è `ghcr.io/codewriter90x/mail-companion-mcp:latest`, con supporto Linux `amd64` e `arm64` (Mac Apple Silicon incluso tramite Docker).
 Il registry è privato: l'accesso al repository non sostituisce automaticamente l'autenticazione Docker. In GitHub creare un personal access token classic con il solo scope `read:packages` e accesso autorizzato al package. Inserirlo **localmente al prompt password**, non nel comando o in chat:
 
 ```sh
 docker login ghcr.io --username IL_TUO_USERNAME_GITHUB
-docker pull ghcr.io/codewriter90x/aruba-mail-mcp:latest
-docker tag ghcr.io/codewriter90x/aruba-mail-mcp:latest aruba-mail-mcp:local
+docker pull ghcr.io/codewriter90x/mail-companion-mcp:latest
+docker tag ghcr.io/codewriter90x/mail-companion-mcp:latest mail-companion-mcp:local
 ```
 
 La tag locale permette di usare gli script senza altre variabili. Per riproducibilità si può scaricare il tag immutabile `sha-<commit completo>` indicato dalla build. `latest` segue main.
@@ -38,7 +38,7 @@ La tag locale permette di usare gli script senza altre variabili. Per riproducib
 ./scripts/build-container.sh
 ```
 
-Lo script costruisce l'immagine `aruba-mail-mcp:local` dal clone ed esegue i test offline. Non richiede password IMAP.
+Lo script costruisce l'immagine `mail-companion-mcp:local` dal clone ed esegue i test offline. Non richiede password IMAP.
 
 ## 2. Inserire le credenziali localmente
 
@@ -70,7 +70,7 @@ Aggiungere un oggetto all'array `accounts` per ogni casella. Conservare il JSON 
 Dalla cartella del clone, ricavare il percorso assoluto con `pwd`, poi:
 
 ```sh
-codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/aruba-mail-mcp/scripts/run-container.sh
+codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/mail-companion-mcp/scripts/run-container.sh
 codex mcp get aruba-mail
 ```
 
@@ -83,7 +83,7 @@ Installare SDK .NET 10, poi:
 
 ```sh
 ./scripts/build-native.sh
-codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/aruba-mail-mcp/scripts/run-native.sh
+codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/mail-companion-mcp/scripts/run-native.sh
 ```
 
 La configurazione JSON e il registro SQLite sono gli stessi della versione Python. Nessun runtime Python richiesto. `ARUBA_MAIL_DOTNET` può indicare il percorso assoluto di `dotnet` se il client grafico non lo trova nel PATH. Durante un aggiornamento conservare credenziali e directory dati; prima salvare un backup del registro a client fermo. I nomi dei dodici strumenti restano invariati.

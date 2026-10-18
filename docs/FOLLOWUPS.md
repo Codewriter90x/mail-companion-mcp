@@ -84,7 +84,7 @@ export LOCAL_UID="$(id -u)" LOCAL_GID="$(id -g)"
 docker compose -f compose.openwebui.yml up -d --build
 ```
 
-Con immagine già scaricata e taggata `aruba-mail-mcp:local`, usare `--no-build` al posto di `--build`. Il compose monta `./data:/data`; la directory deve appartenere all'utente UID/GID specificato. Non ricreare la directory se contiene già il registro e non cancellare i volumi durante gli aggiornamenti.
+Con immagine già scaricata e taggata `mail-companion-mcp:local`, usare `--no-build` al posto di `--build`. Il compose monta `./data:/data`; la directory deve appartenere all'utente UID/GID specificato. Non ricreare la directory se contiene già il registro e non cancellare i volumi durante gli aggiornamenti.
 
 ### Backup
 

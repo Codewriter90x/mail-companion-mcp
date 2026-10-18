@@ -19,11 +19,11 @@ container_id="$(docker run --detach --rm --read-only \
   --env ARUBA_MAIL_PROFILE_PATH=/config/connection.local.json \
   --env ARUBA_MAIL_MCP_TOKEN_FILE=/config/mcp.token \
   --env ARUBA_MAIL_SETUP_CONTAINER=1 \
-  --env "ARUBA_MAIL_SETUP_IMAGE=${ARUBA_MAIL_IMAGE:-aruba-mail-mcp:local}" \
+  --env "ARUBA_MAIL_SETUP_IMAGE=${ARUBA_MAIL_IMAGE:-mail-companion-mcp:local}" \
   --env "ARUBA_MAIL_SETUP_PROJECT_DIR=$project_dir" \
   --env "ARUBA_MAIL_SETUP_CONFIG_DIR=$config_dir" \
   --mount "type=bind,source=$config_dir,target=/config" \
-  "${ARUBA_MAIL_IMAGE:-aruba-mail-mcp:local}" --setup --host 0.0.0.0 --port 8765)"
+  "${ARUBA_MAIL_IMAGE:-mail-companion-mcp:local}" --setup --host 0.0.0.0 --port 8765)"
 ready=false
 for attempt in {1..100}; do
   if [[ -f "$config_dir/setup.token" ]] && curl --silent --fail --output /dev/null "http://127.0.0.1:$port/"; then ready=true; break; fi

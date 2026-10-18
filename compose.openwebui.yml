@@ -2,7 +2,7 @@
 services:
   aruba-mail:
     build: .
-    image: "${ARUBA_MAIL_IMAGE:-aruba-mail-mcp:local}"
+    image: "${ARUBA_MAIL_IMAGE:-mail-companion-mcp:local}"
     command: ["--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000"]
     user: "${LOCAL_UID:?Set LOCAL_UID to your host uid}:${LOCAL_GID:?Set LOCAL_GID to your host gid}"
     read_only: true

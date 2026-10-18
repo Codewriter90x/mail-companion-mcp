@@ -168,7 +168,7 @@ public sealed class SetupStore(string? configPath = null, string? profilePath = 
         var source = Environment.GetEnvironmentVariable("ARUBA_MAIL_SETUP_CONFIG_DIR") ?? Path.GetDirectoryName(ConfigPath)!;
         var native = Quote(Path.Combine(root, "scripts", "run-native.sh"));
         var inContainer = Environment.GetEnvironmentVariable("ARUBA_MAIL_SETUP_CONTAINER") == "1";
-        var image = Quote(Environment.GetEnvironmentVariable("ARUBA_MAIL_SETUP_IMAGE") ?? "aruba-mail-mcp:local");
+        var image = Quote(Environment.GetEnvironmentVariable("ARUBA_MAIL_SETUP_IMAGE") ?? "mail-companion-mcp:local");
         var hostProcess = Environment.ProcessPath;
         var dotnet = !inContainer && hostProcess != null && Path.GetFileNameWithoutExtension(hostProcess).Equals("dotnet", StringComparison.OrdinalIgnoreCase)
             ? " --env ARUBA_MAIL_DOTNET=" + Quote(hostProcess) : "";

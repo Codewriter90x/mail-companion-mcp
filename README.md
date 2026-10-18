@@ -1,12 +1,12 @@
-# Aruba Mail MCP — C# / .NET 10
+# Mail Companion MCP — C# / .NET 10
 
-**[Installazione e configurazione](docs/CONFIGURATION.md)** · **[Questioni e scadenze SQLite](docs/FOLLOWUPS.md)** · [Build container](https://github.com/Codewriter90x/aruba-mail-mcp/actions/workflows/container.yml) · [Container privato](https://github.com/users/Codewriter90x/packages/container/package/aruba-mail-mcp)
+**[Installazione e configurazione](docs/CONFIGURATION.md)** · **[Questioni e scadenze SQLite](docs/FOLLOWUPS.md)** · [Build container](https://github.com/Codewriter90x/mail-companion-mcp/actions/workflows/container.yml) · [Container privato](https://github.com/users/Codewriter90x/packages/container/package/mail-companion-mcp)
 
 Bridge personale locale fra Codex/Open WebUI e caselle IMAP TLS, riscritto interamente in **C#**. Usa SDK MCP ufficiale, MailKit e Microsoft.Data.Sqlite. Nessun runtime Python, servizio database, modello AI o server OAuth.
 
 ## Funzioni
 
-| Posta su Aruba | Registro sul tuo computer |
+| Posta IMAP | Registro sul tuo computer |
 |---|---|
 | `list_accounts`: caselle, senza credenziali | `create_followup`: salva questione e data di ricontrollo |
 | `list_folders`: cartelle IMAP | `list_followups`: attive, scadute, prossime o chiuse |
@@ -35,7 +35,7 @@ cp accounts.example.json accounts.local.json
 chmod 600 accounts.local.json
 # Compilare accounts.local.json in un editor, mai in chat.
 ./scripts/build-native.sh
-codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/aruba-mail-mcp/scripts/run-native.sh
+codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/mail-companion-mcp/scripts/run-native.sh
 ```
 
 Il nome MCP resta `aruba-mail`, con gli stessi dodici tool. Su un'installazione esistente verificare la registrazione prima di sostituirla; riavviare il client se usa ancora il vecchio processo. Il comando di avvio non compila e non stampa nulla su stdout oltre ai messaggi MCP.
@@ -44,10 +44,10 @@ Il nome MCP resta `aruba-mail`, con gli stessi dodici tool. Su un'installazione 
 
 ```sh
 ./scripts/build-container.sh
-codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/aruba-mail-mcp/scripts/run-container.sh
+codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/mail-companion-mcp/scripts/run-container.sh
 ```
 
-Immagine privata: `ghcr.io/codewriter90x/aruba-mail-mcp:latest`, target `linux/amd64` e `linux/arm64`. La build su main esegue i test prima della pubblicazione. Per un aggiornamento controllato usare `sha-<commit completo>`, come descritto nella [guida](docs/CONFIGURATION.md).
+Immagine privata: `ghcr.io/codewriter90x/mail-companion-mcp:latest`, target `linux/amd64` e `linux/arm64`. La build su main esegue i test prima della pubblicazione. Per un aggiornamento controllato usare `sha-<commit completo>`, come descritto nella [guida](docs/CONFIGURATION.md).
 
 Per Open WebUI: Streamable HTTP su `/mcp`, con token Bearer obbligatorio. Codex stdio non richiede token o porte. Per HTTP locale:
 
@@ -104,3 +104,7 @@ Riferimenti tecnici: [SDK MCP C# ufficiale](https://github.com/modelcontextproto
 Su macOS 14+ il pannello nativo include **3. Promemoria**: consenso Apple, scelta lista, prova inventata e servizio all’accesso al Mac. Non richiede OAuth né password iCloud. Il servizio crea e aggiorna gli avvisi a partire dal registro SQLite; spuntare in Apple non chiude automaticamente la questione. [Configurazione e limiti](docs/APPLE_REMINDERS.md).
 
 Il componente Apple deve girare fuori da Docker; notifiche reali e sincronizzazione sull’iPhone richiedono una prova sul dispositivo. L’integrazione Microsoft/Exchange/Google non è inclusa.
+
+## Nome del progetto
+
+Il repository e l’immagine container si chiamano **mail-companion-mcp**. Gli identificatori tecnici esistenti (`aruba-mail` in Codex, variabili `ARUBA_MAIL_*`, namespace C# e directory locali) sono mantenuti per compatibilità con le installazioni già configurate. Non serve spostare credenziali, database o il servizio Promemoria sul Mac.

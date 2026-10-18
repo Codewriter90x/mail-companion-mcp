@@ -30,10 +30,10 @@ Il pannello ha accesso in scrittura solo alla directory di configurazione montat
 Se si usa il registry, è possibile specificare direttamente l'immagine:
 
 ```sh
-ARUBA_MAIL_IMAGE=ghcr.io/codewriter90x/aruba-mail-mcp:latest ./scripts/setup-container.sh
+ARUBA_MAIL_IMAGE=ghcr.io/codewriter90x/mail-companion-mcp:latest ./scripts/setup-container.sh
 ```
 
-I comandi generati conservano il nome dell’immagine selezionata. In alternativa taggare l’immagine come `aruba-mail-mcp:local`. Finché il package è privato il download richiede un account autorizzato.
+I comandi generati conservano il nome dell’immagine selezionata. In alternativa taggare l’immagine come `mail-companion-mcp:local`. Finché il package è privato il download richiede un account autorizzato.
 
 ## 1. Caselle
 
