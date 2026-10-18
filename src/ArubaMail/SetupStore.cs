@@ -111,7 +111,7 @@ public sealed class SetupStore(string? configPath = null, string? profilePath = 
         if (Uri.CheckHostName(host) == UriHostNameType.Unknown || input.ImapPort is < 1 or > 65535) throw new MailError("Server o porta IMAP non validi.");
         var password = input.Password;
         if (string.IsNullOrEmpty(password)) password = Accounts().GetValueOrDefault(id)?.Password;
-        if (string.IsNullOrEmpty(password) || password.Length > 4096 || password.Any(c => c is '\0' or '\r' or '\n')) throw new MailError("Inserire una password valida. Il campo vuoto conserva quella già salvata.");
+        if (string.IsNullOrWhiteSpace(password) || password.Length > 4096 || password.Any(c => c is '\0' or '\r' or '\n')) throw new MailError("Inserire una password valida. Il campo vuoto conserva quella già salvata.");
         // Do not trim password: leading/trailing spaces may be meaningful.
         return new(id, email, user, password, host, input.ImapPort);
     }

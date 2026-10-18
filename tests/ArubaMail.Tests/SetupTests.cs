@@ -58,6 +58,8 @@ public sealed class SetupTests : IDisposable
     public void NewAccountNeedsPasswordAndValidHostAndEmail()
     {
         Assert.Throws<MailError>(() => Store.SaveAccount(new("new", Input(password: null))));
+        Assert.Throws<MailError>(() => Store.SaveAccount(new("new", Input(password: "   "))));
+        Assert.False(File.Exists(Config));
         Assert.Throws<MailError>(() => Store.SaveAccount(new("new", Input() with { ImapHost = "http://server/path" })));
         Assert.Throws<MailError>(() => Store.SaveAccount(new("new", Input() with { Email = "not-email" })));
     }
