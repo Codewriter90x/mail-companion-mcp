@@ -14,7 +14,7 @@ class HTTPTests(unittest.TestCase):
     def test_http_auth_limits_and_discovery(self):
         token = 'test-only-not-a-real-secret-' + 'x' * 32
         app = http_app(token=token)
-        with TestClient(app, base_url='http://localhost:8000') as client:
+        with tempfile.TemporaryDirectory() as directory, patch.dict('os.environ', {'ARUBA_MAIL_DB_PATH':str(Path(directory)/'http.sqlite3')}), TestClient(app, base_url='http://localhost:8000') as client:
             request = {'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2025-06-18','capabilities':{},'clientInfo':{'name':'test','version':'1'}}}
             self.assertEqual(client.post('/mcp', json=request).status_code, 401)
             self.assertEqual(client.get('/mcp').status_code, 401)
@@ -27,7 +27,21 @@ class HTTPTests(unittest.TestCase):
             headers['MCP-Protocol-Version'] = '2025-06-18'
             tools = client.post('/mcp',json={'jsonrpc':'2.0','id':2,'method':'tools/list'},headers=headers)
             self.assertEqual(tools.status_code,200,tools.text)
-            self.assertEqual(len(tools.json()['result']['tools']),6)
+            self.assertEqual(len(tools.json()['result']['tools']),12)
+            def call(name, arguments):
+                response = client.post('/mcp',json={'jsonrpc':'2.0','id':5,'method':'tools/call','params':{'name':name,'arguments':arguments}},headers=headers)
+                self.assertEqual(response.status_code,200,response.text)
+                result = response.json()['result']
+                self.assertFalse(result.get('isError',False),result)
+                return result.get('structuredContent') or json.loads(result['content'][0]['text'])
+            created = call('create_followup',{'title':'Test HTTP','expected_outcome':'Esito','next_review_at':'2099-10-20T10:00:00+02:00','request_id':'http-create'})
+            self.assertEqual(call('list_followups',{})['total'],1)
+            identity=created['followup']['id']
+            detail=call('get_followup',{'followup_id':identity})
+            self.assertEqual(detail['history_total'],1)
+            self.assertTrue(call('create_followup',{'title':'Test HTTP','expected_outcome':'Esito','next_review_at':'2099-10-20T10:00:00+02:00','request_id':'http-create'})['replayed'])
+            call('close_followup',{'followup_id':identity,'expected_revision':1,'request_id':'http-close','closure_reason':'Test finito'})
+            self.assertEqual(call('list_followups',{})['total'],0)
             # Invalid arguments are checked before any config or mailbox access.
             result = client.post('/mcp',json={'jsonrpc':'2.0','id':3,'method':'tools/call','params':{'name':'read_email','arguments':{}}},headers=headers)
             self.assertTrue(result.json()['result']['isError'])

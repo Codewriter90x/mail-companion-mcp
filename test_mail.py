@@ -131,13 +131,13 @@ async def protocol_test():
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = (await session.list_tools()).tools
-            assert {t.name for t in tools} == {'list_accounts','list_folders','list_emails','search_emails','read_email','mark_as_read'}
+            assert {t.name for t in tools} == {'list_accounts','list_folders','list_emails','search_emails','read_email','mark_as_read','create_followup','list_followups','get_followup','update_followup','snooze_followup','close_followup'}
             assert next(t for t in tools if t.name == 'mark_as_read').annotations.readOnlyHint is False
             # Call only a nonexistent account, so this test cannot contact Aruba.
             result = await session.call_tool('list_emails', {'account_id': '__nonexistent_test__'})
             data = result.structuredContent or json.loads(result.content[0].text)
             assert 'error' in data
-    print('PASS MCP stdio: 6 tool, nessun invio/spostamento, errore configurazione sicuro')
+    print('PASS MCP stdio: 12 tool, nessun invio/spostamento, errore configurazione sicuro')
 
 
 if __name__ == '__main__':

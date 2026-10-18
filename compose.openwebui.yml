@@ -11,9 +11,11 @@ services:
     security_opt: [no-new-privileges:true]
     tmpfs: [/tmp:rw,noexec,nosuid,size=16m]
     environment:
+      ARUBA_MAIL_DB_PATH: /data/followups.sqlite3
       ARUBA_MAIL_MCP_TOKEN_FILE: /run/secrets/mcp.token
       ARUBA_MAIL_ALLOWED_HOSTS: aruba-mail:8000
     volumes:
+      - ./data:/data
       - ./accounts.local.json:/app/accounts.local.json:ro
       - ./mcp.token:/run/secrets/mcp.token:ro
     networks: [ai-local]

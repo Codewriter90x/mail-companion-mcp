@@ -13,3 +13,10 @@ __pycache__/
 *.tar.gz
 *.token
 *.secret
+data/
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite3-*
+*.sqlite-*
+*.db-*

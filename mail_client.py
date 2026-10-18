@@ -121,6 +121,7 @@ def headers(client, uid):
         raise MailError('Dimensione messaggio non disponibile.')
     flags = re.search(rb'FLAGS \(([^)]*)\)', meta)
     result = {k: str(parsed.get(k, ''))[:4000] for k in ('from', 'to', 'cc', 'subject', 'date')}
+    result['message_id'] = str(parsed.get('message-id', ''))[:998]
     result.update(message_uid=uid, read=bool(flags and b'\\Seen' in flags[1].split()), size_bytes=int(size[1]))
     return result
 

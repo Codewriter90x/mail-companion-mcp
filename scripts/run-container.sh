@@ -10,9 +10,14 @@ fi
 config_dir="$(cd -- "$(dirname -- "$config_file")" && pwd)"
 config_file="$config_dir/$(basename -- "$config_file")"
 # Match the file owner's host identity; secrets remain a read-only runtime mount.
+data_dir="${ARUBA_MAIL_DATA_DIR:-$project_dir/data}"
+(umask 077; mkdir -p -- "$data_dir")
+data_dir="$(cd -- "$data_dir" && pwd)"
 exec docker run --interactive --rm \
   --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m \
   --cap-drop ALL --security-opt no-new-privileges \
   --user "$(id -u):$(id -g)" \
+  --env ARUBA_MAIL_DB_PATH=/data/followups.sqlite3 \
+  --mount "type=bind,source=$data_dir,target=/data" \
   --mount "type=bind,source=$config_file,target=/app/accounts.local.json,readonly" \
   "$image_name"

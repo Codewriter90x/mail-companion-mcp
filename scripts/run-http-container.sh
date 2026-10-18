@@ -11,10 +11,15 @@ for file in "$config_file" "$token_file"; do
 done
 config_file="$(cd -- "$(dirname -- "$config_file")" && pwd)/$(basename -- "$config_file")"
 token_file="$(cd -- "$(dirname -- "$token_file")" && pwd)/$(basename -- "$token_file")"
+data_dir="${ARUBA_MAIL_DATA_DIR:-$project_dir/data}"
+(umask 077; mkdir -p -- "$data_dir")
+data_dir="$(cd -- "$data_dir" && pwd)"
 exec docker run --rm --init \
   --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m \
   --cap-drop ALL --security-opt no-new-privileges \
   --user "$(id -u):$(id -g)" \
+  --env ARUBA_MAIL_DB_PATH=/data/followups.sqlite3 \
+  --mount "type=bind,source=$data_dir,target=/data" \
   --publish "127.0.0.1:${ARUBA_MAIL_HTTP_PORT:-8000}:8000" \
   --env ARUBA_MAIL_MCP_TOKEN_FILE=/run/secrets/mcp.token \
   --env "ARUBA_MAIL_ALLOWED_HOSTS=${ARUBA_MAIL_ALLOWED_HOSTS:-127.0.0.1:*,localhost:*,[::1]:*,host.docker.internal:*,aruba-mail:*}" \

@@ -1,6 +1,6 @@
 # Aruba Mail MCP
 
-**[Guida completa: installazione e configurazione](docs/CONFIGURATION.md)** · [Build container](https://github.com/Codewriter90x/aruba-mail-mcp/actions/workflows/container.yml) · [Immagine Docker privata](https://github.com/users/Codewriter90x/packages/container/package/aruba-mail-mcp)
+**[Guida completa: installazione e configurazione](docs/CONFIGURATION.md)** · **[Questioni, scadenze e SQLite](docs/FOLLOWUPS.md)** · [Build container](https://github.com/Codewriter90x/aruba-mail-mcp/actions/workflows/container.yml) · [Immagine Docker privata](https://github.com/users/Codewriter90x/packages/container/package/aruba-mail-mcp)
 
 Immagine pronta: `ghcr.io/codewriter90x/aruba-mail-mcp:latest` (`linux/amd64` e `linux/arm64`). Vedi la guida per login al registry privato, credenziali IMAP, collegamento Codex e Open WebUI.
 
@@ -17,7 +17,11 @@ Python 3.11+, SDK MCP ufficiale/FastMCP, trasporti **stdio** e **Streamable HTTP
 - `mark_as_read`: aggiunge solo il flag letto su richiesta, verificando UID/UIDVALIDITY e stato risultante.
 
 Invio, risposta, spostamento, cancellazione e creazione cartelle non sono implementati.
-Non contiene modelli AI o memoria personale/reminder. Un client deve interpretare i risultati.
+Include un registro locale SQLite per questioni, scadenze di ricontrollo e storico, consultabile offline da Codex/Open WebUI. Non contiene modelli AI né notifiche automatiche. Un client deve interpretare i risultati.
+
+## Questioni da seguire e scadenze
+
+Sei nuovi tool: `create_followup`, `list_followups`, `get_followup`, `update_followup`, `snooze_followup`, `close_followup`. Partecipanti multipli e responsabile facoltativo; nessuna relazione automatica tra email letta e questione chiusa. Database locale privato in `data/followups.sqlite3`, persistente tramite bind mount Docker. [Guida ed esempi](docs/FOLLOWUPS.md). Le date sono controlli da consultare su richiesta, non notifiche programmate.
 
 ## Credenziali: solo sul tuo computer
 
@@ -50,7 +54,7 @@ Riavvia il client/apri una nuova sessione se necessario. Il client avvia il cont
 La configurazione è montata solo a runtime in lettura; il container usa filesystem in sola lettura e l'identità UID/GID dell'utente host per accedere al file con permessi 600.
 Non copiare mai il file credenziali nell'immagine. Gli script non spostano né sovrascrivono le registrazioni Codex esistenti automaticamente.
 
-Variabili opzionali: `ARUBA_MAIL_IMAGE` (default `aruba-mail-mcp:local`), `ARUBA_MAIL_CONFIG` (percorso del file locale).
+Variabili opzionali: `ARUBA_MAIL_DATA_DIR` (cartella persistente Docker), `ARUBA_MAIL_IMAGE` (default `aruba-mail-mcp:local`), `ARUBA_MAIL_CONFIG` (percorso del file locale).
 `run-container.sh` usa stdin/stdout per MCP, quindi avviato a mano attende messaggi JSON-RPC: non è un'interfaccia interattiva.
 
 L'immagine locale si può esportare con `docker save` e importare con `docker load`; distribuire separatamente configurazione vuota e istruzioni. La build automatica su main pubblica anche sul registry privato GHCR; istruzioni di download nella guida collegata sopra.
@@ -87,6 +91,8 @@ codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/aruba-mail-mcp/.venv/bin/python /
 
 ## Verifiche
 
+`test_followups.py`: 23 test del registro e prova MCP con riavvio server; `test_http.py` verifica anche creazione/consultazione/chiusura via HTTP autenticato. Tutti usano dati temporanei inventati.
+
 `test_mail.py`: 11 test con IMAP simulato, più discovery MCP stdio e errore sicuro con casella inesistente. I test non richiedono credenziali e non contattano caselle reali, anche se un file locale è presente.
 La build Docker include questi controlli. Le prove reali di connessione, lettura e modifica sono checkpoint separati da eseguire solo con autorizzazione del titolare.
 
@@ -109,6 +115,7 @@ Con Open WebUI sullo stesso host: pannello amministrazione → Impostazioni → 
 Se Open WebUI è in Docker, `127.0.0.1` indica il suo container. Usare una rete Docker privata comune: il file `compose.openwebui.yml` avvia solo il bridge, senza pubblicare porte. Collegare anche il container Open WebUI alla stessa rete già esistente e impostare UID/GID dell'utente che possiede i file:
 
 ```sh
+(umask 077; mkdir -p data)
 export LOCAL_UID="$(id -u)" LOCAL_GID="$(id -g)"
 # La rete ai-local deve già esistere e includere Open WebUI.
 docker compose -f compose.openwebui.yml up -d --build

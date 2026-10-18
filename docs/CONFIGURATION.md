@@ -1,5 +1,7 @@
 # Configurazione da zero
 
+[Registro locale SQLite: questioni e scadenze](FOLLOWUPS.md). Dopo un aggiornamento, ricaricare la discovery: sono esposti dodici strumenti (sei IMAP e sei follow-up). Nessuna notifica automatica.
+
 Il bridge legge caselle reali e può segnarne i messaggi come letti. Non invia, sposta o elimina email. Funziona in locale senza OAuth. Le password non sono incluse nel repository né nell'immagine.
 
 ## 1. Scaricare il progetto privato
@@ -94,7 +96,7 @@ Nel pannello amministrazione Open WebUI, sezione strumenti esterni/connessioni (
 1. Aggiungere una connessione **MCP Streamable HTTP**.
 2. URL: `http://127.0.0.1:8000/mcp`.
 3. Autenticazione: **Bearer**, valore del file `mcp.token`; non scegliere OAuth.
-4. Verificare la connessione e la discovery dei sei strumenti.
+4. Verificare la connessione e la discovery dei dodici strumenti.
 5. Limitare l'accesso al solo utente autorizzato alle caselle e abilitare gli strumenti nella chat.
 
 ### Open WebUI già in Docker
@@ -104,6 +106,7 @@ Nel pannello amministrazione Open WebUI, sezione strumenti esterni/connessioni (
 ```sh
 docker network create ai-local
 docker network connect ai-local NOME_CONTAINER_OPENWEBUI
+(umask 077; mkdir -p data)
 export LOCAL_UID="$(id -u)" LOCAL_GID="$(id -g)"
 docker compose -f compose.openwebui.yml up -d --no-build
 ```
