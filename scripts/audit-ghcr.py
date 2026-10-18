@@ -14,6 +14,7 @@ import tarfile
 import tempfile
 import urllib.parse
 import urllib.request
+import zipfile
 
 PACKAGE = 'codewriter90x/mail-companion-mcp'
 REGISTRY = 'https://ghcr.io'
@@ -55,6 +56,10 @@ class Audit:
         self.bytes = 0
         self.layers = 0
         self.manifests = 0
+        self.vendor_markers = []
+        self.official_base_layers = set()
+        self.vendor_package_hashes = {}
+        self.base_digest = None
 
     def request(self, path, accept=None):
         headers = {'Authorization': 'Bearer ' + self.token, 'User-Agent': 'mail-companion-image-audit'}
@@ -80,11 +85,76 @@ class Audit:
         tmp.seek(0)
         return tmp
 
-    def scan(self, data, location):
-        # Native binaries may store strings as UTF-16; scan both representations.
+    def prepare_base_validation(self):
+        # A marker is upstream only when its complete layer digest matches MCR.
+        url = 'https://mcr.microsoft.com/v2/dotnet/aspnet/manifests/'
+        def manifest(reference):
+            request = urllib.request.Request(url + reference, headers={'Accept': ACCEPT})
+            with urllib.request.urlopen(request, timeout=60) as response:
+                data = response.read(4 * 1024 * 1024 + 1)
+            if len(data) > 4 * 1024 * 1024:
+                raise ValueError('Upstream manifest too large')
+            if reference.startswith('sha256:') and hashlib.sha256(data).hexdigest() != reference.split(':')[1]:
+                raise ValueError('Upstream manifest digest mismatch')
+            return data, json.loads(data)
+        data, index = manifest('10.0')
+        self.base_digest = 'sha256:' + hashlib.sha256(data).hexdigest()
+        for child in index.get('manifests', []):
+            platform = child.get('platform', {})
+            if platform.get('os') != 'linux' or platform.get('architecture') not in ['amd64', 'arm64']:
+                continue
+            _, image = manifest(digest_ok(child['digest']))
+            self.official_base_layers.update(digest_ok(x['digest']) for x in image.get('layers', []))
+        if not self.official_base_layers:
+            raise ValueError('Official base layers could not be validated')
+
+    def sqlite_source(self, data, location):
+        packages = {
+            'app/SQLitePCLRaw.batteries_v2.dll': 'SQLitePCLRaw.bundle_e_sqlite3',
+            'app/SQLitePCLRaw.core.dll': 'SQLitePCLRaw.core',
+            'app/SQLitePCLRaw.provider.e_sqlite3.dll': 'SQLitePCLRaw.provider.e_sqlite3',
+        }
+        package = packages.get(location)
+        if not package:
+            return None
+        if package not in self.vendor_package_hashes:
+            lock = json.loads((Path(__file__).resolve().parents[1] / 'src/ArubaMail/packages.lock.json').read_text())
+            entries = [v[package] for v in lock['dependencies'].values() if package in v]
+            if len(entries) != 1:
+                raise ValueError('Ambiguous dependency lock entry')
+            entry = entries[0]
+            identity = package.lower()
+            version = entry['resolved']
+            url = 'https://api.nuget.org/v3-flatcontainer/' + identity + '/' + version + '/' + identity + '.' + version + '.nupkg'
+            with urllib.request.urlopen(url, timeout=60) as response:
+                archive = response.read(16 * 1024 * 1024 + 1)
+            if len(archive) > 16 * 1024 * 1024 or base64.b64encode(hashlib.sha512(archive).digest()).decode() != entry['contentHash']:
+                raise ValueError('Upstream NuGet package hash mismatch')
+            filename = location.split('/')[-1]
+            with zipfile.ZipFile(io.BytesIO(archive)) as zipped:
+                hashes = {hashlib.sha256(zipped.read(n)).hexdigest() for n in zipped.namelist() if n.endswith('/' + filename)}
+            self.vendor_package_hashes[package] = (hashes, version)
+        hashes, version = self.vendor_package_hashes[package]
+        return 'nuget.org/' + package + '/' + version if hashlib.sha256(data).hexdigest() in hashes else None
+
+    def scan(self, data, location, official_layer=False):
+        compact = data.replace(b'\0', b'')
         for category, pattern in PATTERNS.items():
-            if pattern.search(data) or pattern.search(data.replace(b'\0', b'')):
-                self.findings.append({'category': category, 'location': location})
+            if pattern.search(data) or pattern.search(compact):
+                source = None
+                if category in ['private_key_material', 'developer_home_path']:
+                    source = 'mcr.microsoft.com/dotnet/aspnet@' + self.base_digest if official_layer else self.sqlite_source(data, location)
+                item = {'category': category, 'location': location, 'file_sha256': hashlib.sha256(data).hexdigest()}
+                if source:
+                    item['verified_upstream'] = source
+                    self.vendor_markers.append(item)
+                else:
+                    self.findings.append(item)
+        if location.startswith('app/ArubaMail.') or location == 'app/accounts.example.json':
+            for match in re.finditer(rb'[A-Za-z0-9_.+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)', compact):
+                domain = match.group(1).decode().lower()
+                if domain not in ['example.com', 'example.org', 'example.net', 'azienda.it'] and not domain.endswith(('.invalid', '.example', '.test')):
+                    self.findings.append({'category': 'application_email_address', 'location': location, 'value_sha256': hashlib.sha256(match.group()).hexdigest()})
 
     def layer(self, digest, media_type):
         if digest in self.seen:
@@ -111,7 +181,7 @@ class Audit:
                         if member.size > MAX_FILE:
                             raise ValueError('File exceeds audit bound: ' + name)
                         data = archive.extractfile(member).read()
-                        self.scan(data, name)
+                        self.scan(data, name, official_layer=digest in self.official_base_layers)
                         if name == 'app/accounts.example.json':
                             config = json.loads(data)
                             if any(account.get(k) for account in config.get('accounts', []) for k in ['password', 'username', 'email']):
@@ -156,6 +226,7 @@ class Audit:
             self.layer(layer['digest'], layer.get('mediaType', ''))
 
     def run(self):
+        self.prepare_base_validation()
         # Follow explicit tag pages, so immutable older published tags are checked too.
         tags = []
         path = '/v2/' + PACKAGE + '/tags/list?n=100'
@@ -176,7 +247,7 @@ class Audit:
             self.manifest(tag)
         if self.architectures != {'amd64', 'arm64'}:
             raise ValueError('Both runtime architectures must be audited')
-        return {'package': 'ghcr.io/' + PACKAGE, 'tags': sorted(set(tags)), 'architectures': sorted(self.architectures), 'manifest_count': self.manifests, 'unique_layers_and_attestations': self.layers, 'unique_files_in_all_layers': len(self.files), 'compressed_bytes_downloaded': self.bytes, 'app_files': sorted(self.app_files), 'runtime_configs': self.configs, 'findings': self.findings, 'checks': ['all tagged versions and referenced architecture/attestation manifests', 'every tar layer including subsequently deleted files', 'manifest and config metadata, history, environment', 'sensitive configuration/database/token paths', 'private keys, provider credentials, credential URLs, developer home paths', 'blank example credentials'], 'limitations': ['Pattern detection cannot prove absence of every possible secret.', 'Standard OS and runtime package author identities are vendor metadata.', 'Only versions reachable from current registry tags are enumerated.']}
+        return {'package': 'ghcr.io/' + PACKAGE, 'tags': sorted(set(tags)), 'architectures': sorted(self.architectures), 'manifest_count': self.manifests, 'unique_layers_and_attestations': self.layers, 'unique_files_in_all_layers': len(self.files), 'compressed_bytes_downloaded': self.bytes, 'app_files': sorted(self.app_files), 'runtime_configs': self.configs, 'findings': self.findings, 'verified_vendor_markers': self.vendor_markers, 'verified_microsoft_base': self.base_digest, 'checks': ['all tagged versions and referenced architecture/attestation manifests', 'every tar layer including subsequently deleted files', 'manifest and config metadata, history, environment', 'sensitive configuration/database/token paths', 'private keys, provider credentials, credential URLs, developer home paths', 'blank example credentials'], 'limitations': ['Pattern detection cannot prove absence of every possible secret.', 'Standard OS and runtime package author identities are vendor metadata.', 'Only versions reachable from current registry tags are enumerated.']}
 
 
 def main():
