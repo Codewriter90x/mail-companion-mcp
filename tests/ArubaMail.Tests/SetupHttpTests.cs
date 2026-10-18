@@ -23,6 +23,7 @@ public class SetupHttpTests
         process.StartInfo.Environment["ARUBA_MAIL_CONFIG"] = config; process.StartInfo.Environment["ARUBA_MAIL_SETUP_TOKEN_FILE"] = auth;
         process.StartInfo.Environment["ARUBA_MAIL_PROFILE_PATH"] = Path.Combine(root, "connection.local.json");
         process.StartInfo.Environment["ARUBA_MAIL_MCP_TOKEN_FILE"] = Path.Combine(root, "mcp.token");
+        process.StartInfo.Environment["ARUBA_MAIL_DB_PATH"] = Path.Combine(root, "data", "followups.sqlite3");
         process.Start(); var stdout = process.StandardOutput.ReadToEndAsync(); var stderr = process.StandardError.ReadToEndAsync();
         try
         {
@@ -39,6 +40,7 @@ public class SetupHttpTests
             using (var denied = await http.GetAsync("/setup/api/state")) Assert.Equal(HttpStatusCode.Unauthorized, denied.StatusCode);
             http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", secret);
             async Task<JsonNode> GetState() => JsonNode.Parse(await http.GetStringAsync("/setup/api/state"))!;
+            using (var deniedReminders = await http.GetAsync("/setup/api/reminders")) Assert.True(deniedReminders.IsSuccessStatusCode);
             var state = await GetState(); Assert.Empty(state["accounts"]!.AsArray());
             using (var evil = new HttpRequestMessage(HttpMethod.Post, "/setup/api/profile") { Content = new StringContent("{}", Encoding.UTF8, "application/json") })
             { evil.Headers.Add("Origin", "https://evil.invalid"); using var response = await http.SendAsync(evil); Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode); }

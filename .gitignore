@@ -28,3 +28,8 @@ artifacts/
 config/
 connection.local.json
 .setup.lock
+
+apple-reminders.local.json
+apple-reminders.local.json.lock
+*.apple-status.json
+*.apple-sync.lock

@@ -13,7 +13,7 @@ public sealed class FollowupStore(string? path = null, Func<DateTimeOffset>? now
     private string Clock => Validate.Format(Now);
     private static readonly string[] Statuses = ["open", "waiting", "needs_review", "closed"];
 
-    private SqliteConnection? Open(bool write = false)
+    internal SqliteConnection? Open(bool write = false)
     {
         if (!write && !File.Exists(PathName)) return null;
         if (write)
@@ -211,7 +211,8 @@ public sealed class FollowupStore(string? path = null, Func<DateTimeOffset>? now
             using var cmd = Command(db, "SELECT * FROM followups" + clause + " ORDER BY next_review_at,id LIMIT $p" + args.Count + " OFFSET $p" + (args.Count + 1), args.Concat([limit, offset]));
             using var reader = cmd.ExecuteReader(); while (reader.Read()) rows.Add(View(Row(reader)));
         }
-        return new JsonObject { ["followups"] = rows, ["total"] = total, ["offset"] = offset, ["has_more"] = offset + limit < total, ["checked_at"] = Clock, ["notifications_enabled"] = false };
+        var notifications = AppleReminderAgent.Status(PathName);
+        return new JsonObject { ["followups"] = rows, ["total"] = total, ["offset"] = offset, ["has_more"] = offset + limit < total, ["checked_at"] = Clock, ["notifications_enabled"] = notifications["state"]?.ToString() == "ok" && notifications["stale"]?.GetValue<bool>() == false, ["apple_reminders_worker"] = notifications };
     }
     public JsonObject Get(string id, int history_limit = 20, int history_offset = 0)
     {

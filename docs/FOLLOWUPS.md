@@ -90,9 +90,9 @@ Con immagine già scaricata e taggata `aruba-mail-mcp:local`, usare `--no-build`
 
 Salvare il registro fuori dal repository in un backup privato. A processo fermo, copiare la directory dati; a processo attivo usare l'API SQLite di backup o il comando `.backup` del client SQLite, non copiare soltanto il file principale durante una transazione. Verificare il ripristino su una copia separata prima di sostituire l'originale. Questa versione non programma backup automatici.
 
-## Limite esplicito: nessuna notifica automatica
+## Avvisi: servizio Apple opzionale
 
-È un registro di scadenze **consultabile su richiesta**. Non avvia timer in background, non invia Telegram/notifiche macOS, non contatta i partecipanti e non sollecita nessuno.
+È un registro di scadenze **consultabile su richiesta**. Il registro da solo non avvia timer in background, non invia Telegram, non contatta i partecipanti e non sollecita nessuno. È disponibile il [collegamento opzionale a Promemoria Apple](APPLE_REMINDERS.md): un servizio separato sul Mac crea e aggiorna gli avvisi nella lista scelta.
 Il client può dire “controllo salvato per quella data”, ma non “ti avviserò”. Le date passate restano visibili tra gli scaduti alla prossima consultazione, anche dopo computer spento/riavviato. Notifiche locali indipendenti dalla chat saranno un incremento separato.
 
 ## Test

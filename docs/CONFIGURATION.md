@@ -1,6 +1,6 @@
 # Configurazione da zero
 
-[Registro locale SQLite: questioni e scadenze](FOLLOWUPS.md). Dopo un aggiornamento, ricaricare la discovery: sono esposti dodici strumenti (sei IMAP e sei follow-up). Nessuna notifica automatica.
+[Registro locale SQLite: questioni e scadenze](FOLLOWUPS.md). Dopo un aggiornamento, ricaricare la discovery: sono esposti dodici strumenti (sei IMAP e sei follow-up). Avvisi opzionali tramite [Promemoria Apple](APPLE_REMINDERS.md), con servizio nativo separato.
 
 Il bridge legge caselle reali e può segnarne i messaggi come letti. Non invia, sposta o elimina email. Funziona in locale senza OAuth. Le password non sono incluse nel repository né nell'immagine.
 

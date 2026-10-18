@@ -87,3 +87,7 @@ Non creare due configurazioni per le stesse caselle senza decidere quale usare: 
 - HTTP è per il computer locale o la rete Docker privata sullo stesso host. Non esporre il pannello su LAN o internet. Nel container il bind interno `0.0.0.0` è ammesso solo nella modalità esplicita usata dallo script, che pubblica sulla sola loopback.
 
 Il nome del repository, il package Docker e l'identificativo MCP `aruba-mail` restano invariati in questo incremento. Il pannello usa il nome descrittivo Mail Companion, senza interrompere i collegamenti esistenti.
+
+## Promemoria Apple
+
+Il pannello nativo su macOS include la terza sezione **Promemoria**. La [guida dedicata](APPLE_REMINDERS.md) spiega consenso, scelta lista, avviso inventato e avvio indipendente dalla chat. Il pannello Docker mostra il requisito del componente nativo Mac.

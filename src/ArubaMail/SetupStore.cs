@@ -92,7 +92,7 @@ public sealed class SetupStore(string? configPath = null, string? profilePath = 
         profile = Profile(),
         http_token_configured = File.Exists(TokenPath),
         instructions = Instructions(Profile()),
-        notifications_enabled = false
+        notifications = AppleReminderAgent.Status()
     };
     private static void ValidateProfile(ConnectionProfile p)
     {

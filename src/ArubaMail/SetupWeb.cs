@@ -24,6 +24,7 @@ public static class SetupWeb
         builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = 65536);
         builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower);
         builder.Services.AddSingleton(new SetupStore());
+        builder.Services.AddSingleton(new AppleReminderSettings());
         builder.Services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = 429;
@@ -67,6 +68,13 @@ public static class SetupWeb
         app.MapPost("/setup/api/accounts/test", async (AccountInput input, SetupStore store, CancellationToken ct) => Results.Json(await store.TestAccount(input, ct), Settings.Json)).RequireRateLimiting("imap-test");
         app.MapPost("/setup/api/profile", (SaveProfileInput input, SetupStore store) => Results.Json(store.SaveProfile(input), Settings.Json));
         app.MapPost("/setup/api/token", (SetupStore store) => Results.Json(store.RevealToken(), Settings.Json));
+        app.MapGet("/setup/api/reminders", (AppleReminderSettings settings) => Results.Json(new { settings = settings.State(), worker = AppleReminderAgent.Status() }, Settings.Json));
+        app.MapPost("/setup/api/reminders/authorize", async (AppleReminderSettings settings, CancellationToken ct) => Results.Json(await settings.Lists(true, ct), Settings.Json)).RequireRateLimiting("imap-test");
+        app.MapPost("/setup/api/reminders/lists", async (AppleReminderSettings settings, CancellationToken ct) => Results.Json(await settings.Lists(false, ct), Settings.Json)).RequireRateLimiting("imap-test");
+        app.MapPost("/setup/api/reminders/save", async (SaveAppleReminderInput input, AppleReminderSettings settings, CancellationToken ct) => Results.Json(await settings.Save(input, ct), Settings.Json));
+        app.MapPost("/setup/api/reminders/test", async (AppleReminderSettings settings, CancellationToken ct) => Results.Json(await settings.Test(ct), Settings.Json)).RequireRateLimiting("imap-test");
+        app.MapPost("/setup/api/reminders/start", async (CancellationToken ct) => { await AppleReminderAgent.Install(true, ct); return Results.Json(new { success = true }); });
+        app.MapPost("/setup/api/reminders/stop", async (CancellationToken ct) => { await AppleReminderAgent.Install(false, ct); return Results.Json(new { success = true }); });
         var bindHost = host == "::1" ? "[::1]" : host;
         app.Urls.Add($"http://{bindHost}:{port}");
         if (openBrowser)

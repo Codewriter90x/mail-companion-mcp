@@ -15,7 +15,7 @@ Bridge personale locale fra Codex/Open WebUI e caselle IMAP TLS, riscritto inter
 | `read_email`: testo, senza segnare letto | `snooze_followup`: rinvia il controllo |
 | `mark_as_read`: aggiunge solo il flag letto | `close_followup`: chiusura esplicita con motivo |
 
-Una questione può coinvolgere più aziende senza un responsabile certo. Segnare un messaggio come letto non chiude la questione; ricevere una risposta interlocutoria non rinvia il controllo. Il registro conserva solo metadati, riferimenti e note sintetiche. **Le scadenze sono consultabili su richiesta: nessuna notifica automatica.**
+Una questione può coinvolgere più aziende senza un responsabile certo. Segnare un messaggio come letto non chiude la questione; ricevere una risposta interlocutoria non rinvia il controllo. Il registro conserva solo metadati, riferimenti e note sintetiche. **Le scadenze sono consultabili su richiesta; gli avvisi richiedono il [servizio Promemoria Apple opzionale](docs/APPLE_REMINDERS.md).**
 
 Invio, risposta, spostamento, eliminazione e creazione cartelle email restano fuori da questa versione.
 
@@ -98,3 +98,9 @@ Test xUnit: IMAP simulato con fetch selettivi e flag, limiti, registro SQLite/pe
 Connessione Aruba reale, modifica di una email scelta e configurazione nell'istanza Open WebUI sono verifiche distinte: non sono dimostrate dai soli test automatici.
 
 Riferimenti tecnici: [SDK MCP C# ufficiale](https://github.com/modelcontextprotocol/csharp-sdk), [MailKit](https://mimekit.net/docs/html/T_MailKit_IMailFolder.htm), [MCP in Codex](https://developers.openai.com/codex/mcp).
+
+## Avvisi con Promemoria Apple
+
+Su macOS 14+ il pannello nativo include **3. Promemoria**: consenso Apple, scelta lista, prova inventata e servizio all’accesso al Mac. Non richiede OAuth né password iCloud. Il servizio crea e aggiorna gli avvisi a partire dal registro SQLite; spuntare in Apple non chiude automaticamente la questione. [Configurazione e limiti](docs/APPLE_REMINDERS.md).
+
+Il componente Apple deve girare fuori da Docker; notifiche reali e sincronizzazione sull’iPhone richiedono una prova sul dispositivo. L’integrazione Microsoft/Exchange/Google non è inclusa.

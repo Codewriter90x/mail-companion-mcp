@@ -5,6 +5,7 @@ if (access) history.replaceState(null, '', location.pathname);
 let state = null;
 let editing = null;
 let busy = false;
+let reminderState = null;
 function status(message, error = false) {
   $('status').textContent = message;
   $('status').classList.toggle('error', error);
@@ -29,18 +30,19 @@ async function action(run) {
   finally { busy = false; document.querySelectorAll('button').forEach(b => b.disabled = false); }
 }
 function lock() {
-  access = ''; state = null; editing = null;
+  access = ''; state = null; editing = null; reminderState = null;
   $('password').value = ''; $('access-code').value = '';
   $('token-fallback').value = ''; $('token-fallback').hidden = true;
   $('account-form').reset(); $('account-list').replaceChildren();
   $('app').hidden = true; $('login').hidden = false;
   $('status').hidden = true;
 }
-function tabs(connection) {
+function tabs(selected) {
   $('status').hidden = true;
-  $('accounts-panel').hidden = connection; $('connection-panel').hidden = !connection;
-  $('tab-accounts').setAttribute('aria-selected', String(!connection));
-  $('tab-connection').setAttribute('aria-selected', String(connection));
+  for (const name of ['accounts', 'connection', 'reminders']) {
+    $(name + '-panel').hidden = name !== selected;
+    $('tab-' + name).setAttribute('aria-selected', String(name === selected));
+  }
 }
 function listAccounts() {
   $('account-list').replaceChildren(); $('account-count').textContent = state.accounts.length;
@@ -106,8 +108,8 @@ async function login() {
 $('login-form').addEventListener('submit', event => { event.preventDefault(); access = $('access-code').value.trim(); action(login); });
 $('logout').addEventListener('click', lock);
 $('reload').addEventListener('click', () => action(async () => { await login(); status('Configurazione ricaricata.'); }));
-$('tab-accounts').addEventListener('click', () => tabs(false));
-$('tab-connection').addEventListener('click', () => tabs(true));
+$('tab-accounts').addEventListener('click', () => tabs('accounts'));
+$('tab-connection').addEventListener('click', () => tabs('connection'));
 $('new-account').addEventListener('click', () => { editAccount(); $('account-id').focus(); });
 $('email').addEventListener('blur', () => { if (!$('username').value) $('username').value = $('email').value; });
 $('account-form').addEventListener('submit', event => { event.preventDefault(); action(async () => {
@@ -145,4 +147,45 @@ window.addEventListener('hashchange', () => {
     action(login);
   }
 });
+$('tab-reminders').addEventListener('click', () => action(async () => { tabs('reminders'); await loadReminders(); }));
+function renderReminderLists(calendars) {
+  const select = $('reminders-calendar'); select.replaceChildren();
+  for (const list of calendars) {
+    const option = document.createElement('option'); option.value = list.id; option.textContent = list.title + ' · ' + list.source; select.append(option);
+  }
+  if (calendars.some(x => x.id === reminderState.settings.profile.calendar_id)) select.value = reminderState.settings.profile.calendar_id;
+}
+async function loadReminders() {
+  reminderState = await api('reminders');
+  const { settings, worker } = reminderState;
+  $('reminders-unavailable').hidden = settings.available;
+  $('reminders-controls').hidden = !settings.available;
+  $('reminders-enabled').value = String(settings.profile.enabled);
+  const select = $('reminders-calendar'); select.replaceChildren();
+  const option = document.createElement('option'); option.value = settings.profile.calendar_id; option.textContent = settings.profile.calendar_title || 'Autorizza l’accesso e carica le liste'; select.append(option);
+  const messages = { ok: 'Ultimo controllo riuscito.', retry_pending: 'Collegamento non riuscito: il servizio riproverà. Verifica autorizzazione e lista.', disabled: 'Collegamento disattivato.', not_started: 'Nessun controllo ancora eseguito.' };
+  $('reminders-worker').textContent = (settings.agent_installed ? 'Avvio automatico configurato. ' : 'Avvio automatico non configurato. ') + (worker.stale ? 'Il servizio non risulta aggiornato: avvialo per riprendere i controlli.' : messages[worker.state] || 'Stato non disponibile.');
+}
+for (const [id, endpoint] of [['reminders-authorize', 'authorize'], ['reminders-lists', 'lists']]) {
+  $(id).addEventListener('click', () => action(async () => {
+    const result = await api('reminders/' + endpoint, {}); renderReminderLists(result.calendars);
+    status(result.calendars.length ? 'Liste caricate. Scegli quella per i follow-up e salva.' : 'Nessuna lista scrivibile. Crea una lista in Promemoria Apple e ricarica.');
+  }));
+}
+$('reminders-form').addEventListener('submit', event => { event.preventDefault(); action(async () => {
+  const select = $('reminders-calendar'); const enabled = $('reminders-enabled').value === 'true';
+  const calendarTitle = select.value === reminderState.settings.profile.calendar_id ? reminderState.settings.profile.calendar_title || select.selectedOptions[0]?.textContent : select.selectedOptions[0]?.textContent;
+  await api('reminders/save', { revision: reminderState.settings.revision, profile: { enabled, calendar_id: select.value, calendar_title: calendarTitle || '' } });
+  await loadReminders(); status(enabled ? 'Lista salvata. Prova l’avviso, poi avvia il servizio sul Mac.' : 'Collegamento disattivato. I promemoria già creati restano in Apple.');
+}); });
+$('reminders-test').addEventListener('click', () => action(async () => {
+  if (!confirm('Creare un promemoria inventato nella lista salvata, con avviso tra circa 3 minuti?')) return;
+  const result = await api('reminders/test', {}); status(result.message);
+}));
+for (const [id, endpoint] of [['reminders-start', 'start'], ['reminders-stop', 'stop']]) {
+  $(id).addEventListener('click', () => action(async () => {
+    await api('reminders/' + endpoint, {}); await loadReminders();
+    status(endpoint === 'start' ? 'Servizio avviato e configurato per l’accesso al Mac. Il primo controllo può richiedere circa 30 secondi.' : 'Servizio fermato. I promemoria già sincronizzati restano in Apple.');
+  }));
+}
 if (access) action(login);
