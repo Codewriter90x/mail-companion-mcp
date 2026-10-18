@@ -1,0 +1,29 @@
+name: Audit published GHCR images
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect all tagged images, metadata and layers
+        env:
+          GHCR_AUDIT_USER: ${{ github.actor }}
+          GHCR_AUDIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_AUDIT_REPORT: ${{ runner.temp }}/image-audit.json
+        run: python3 scripts/audit-ghcr.py
+      - name: Save redacted audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghcr-image-audit
+          path: ${{ runner.temp }}/image-audit.json
+          if-no-files-found: warn
+          retention-days: 7
