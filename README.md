@@ -1,6 +1,6 @@
 # Mail Companion MCP — C# / .NET 10
 
-**[Installazione e configurazione](docs/CONFIGURATION.md)** · **[Questioni e scadenze SQLite](docs/FOLLOWUPS.md)** · [Build container](https://github.com/Codewriter90x/mail-companion-mcp/actions/workflows/container.yml) · [Container privato](https://github.com/users/Codewriter90x/packages/container/package/mail-companion-mcp)
+**[Installazione e configurazione](docs/CONFIGURATION.md)** · **[Questioni e scadenze SQLite](docs/FOLLOWUPS.md)** · [Build container](https://github.com/Codewriter90x/mail-companion-mcp/actions/workflows/container.yml) · [Container GHCR](https://github.com/Codewriter90x/mail-companion-mcp/pkgs/container/mail-companion-mcp)
 
 Bridge personale locale fra Codex/Open WebUI e caselle IMAP TLS, riscritto interamente in **C#**. Usa SDK MCP ufficiale, MailKit e Microsoft.Data.Sqlite. Nessun runtime Python, servizio database, modello AI o server OAuth.
 
@@ -47,7 +47,7 @@ Il nome MCP resta `aruba-mail`, con gli stessi dodici tool. Su un'installazione 
 codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/mail-companion-mcp/scripts/run-container.sh
 ```
 
-Immagine privata: `ghcr.io/codewriter90x/mail-companion-mcp:latest`, target `linux/amd64` e `linux/arm64`. La build su main esegue i test prima della pubblicazione. Per un aggiornamento controllato usare `sha-<commit completo>`, come descritto nella [guida](docs/CONFIGURATION.md).
+Immagine pubblica, scaricabile senza login: `ghcr.io/codewriter90x/mail-companion-mcp:latest`, target `linux/amd64` e `linux/arm64`. La build su main esegue i test prima della pubblicazione. Per un aggiornamento controllato usare `sha-<commit completo>`, come descritto nella [guida](docs/CONFIGURATION.md).
 
 Per Open WebUI: Streamable HTTP su `/mcp`, con token Bearer obbligatorio. Codex stdio non richiede token o porte. Per HTTP locale:
 

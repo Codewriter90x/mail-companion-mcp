@@ -17,21 +17,20 @@ Installare e avviare Docker, poi scegliere tra immagine pronta e build locale.
 
 ### Immagine pronta da GHCR
 
-Package: [mail-companion-mcp](https://github.com/users/Codewriter90x/packages/container/package/mail-companion-mcp).
+Package: [mail-companion-mcp](https://github.com/Codewriter90x/mail-companion-mcp/pkgs/container/mail-companion-mcp).
 Build e diagnostica: [GitHub Actions](https://github.com/Codewriter90x/mail-companion-mcp/actions/workflows/container.yml).
 
 L'immagine è `ghcr.io/codewriter90x/mail-companion-mcp:latest`, con supporto Linux `amd64` e `arm64` (Mac Apple Silicon incluso tramite Docker).
-Il registry è privato: l'accesso al repository non sostituisce automaticamente l'autenticazione Docker. In GitHub creare un personal access token classic con il solo scope `read:packages` e accesso autorizzato al package. Inserirlo **localmente al prompt password**, non nel comando o in chat:
+Il package è pubblico: non servono account GitHub, token né `docker login` per scaricarlo.
 
 ```sh
-docker login ghcr.io --username IL_TUO_USERNAME_GITHUB
 docker pull ghcr.io/codewriter90x/mail-companion-mcp:latest
 docker tag ghcr.io/codewriter90x/mail-companion-mcp:latest mail-companion-mcp:local
 ```
 
 La tag locale permette di usare gli script senza altre variabili. Per riproducibilità si può scaricare il tag immutabile `sha-<commit completo>` indicato dalla build. `latest` segue main.
 
-### Alternativa senza token del registry
+### Alternativa: costruire dal codice sorgente
 
 ```sh
 ./scripts/build-container.sh
@@ -162,3 +161,9 @@ Verificare separatamente discovery, login IMAP e lettura MIME. Solo se desiderat
 | MIME o dimensione non supportati | Il bridge restituisce un errore senza scaricare tutto come ripiego |
 
 Gli script sono per shell POSIX su macOS/Linux. Windows richiede adattare percorsi/mount e gestione permessi, oppure usare WSL2: non è stato collaudato.
+
+## Controllo del contenuto delle immagini
+
+Il workflow manuale [Audit published GHCR images](https://github.com/Codewriter90x/mail-companion-mcp/actions/workflows/image-audit.yml) controlla tutte le versioni taggate, entrambe le architetture, manifest, attestazioni, configurazioni e ogni layer (anche file successivamente cancellati). Il report non riporta i valori individuati.
+
+I marcatori nelle librerie standard vengono distinti solo verificando gli hash contro i layer ufficiali Microsoft o i pacchetti NuGet bloccati dal lockfile; un nome file da solo non basta. Nessuna scansione a pattern garantisce l’assenza assoluta di qualsiasi segreto. Credenziali, token MCP e registro SQLite devono restare nei volumi locali, mai nella build.

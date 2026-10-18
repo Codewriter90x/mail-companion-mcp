@@ -17,7 +17,7 @@ Il secondo comando apre il browser autenticato su `http://127.0.0.1:8765/`. Alla
 
 ### Con Docker
 
-Dopo avere costruito l'immagine (`./scripts/build-container.sh`) oppure scaricato/taggato quella privata come descritto in [CONFIGURATION.md](CONFIGURATION.md):
+Dopo avere costruito l'immagine (`./scripts/build-container.sh`) oppure scaricato/taggato quella pubblica come descritto in [CONFIGURATION.md](CONFIGURATION.md):
 
 ```sh
 ./scripts/setup-container.sh
@@ -33,7 +33,7 @@ Se si usa il registry, è possibile specificare direttamente l'immagine:
 ARUBA_MAIL_IMAGE=ghcr.io/codewriter90x/mail-companion-mcp:latest ./scripts/setup-container.sh
 ```
 
-I comandi generati conservano il nome dell’immagine selezionata. In alternativa taggare l’immagine come `mail-companion-mcp:local`. Finché il package è privato il download richiede un account autorizzato.
+I comandi generati conservano il nome dell’immagine selezionata. In alternativa taggare l’immagine come `mail-companion-mcp:local`. Il package pubblico si scarica senza autenticazione.
 
 ## 1. Caselle
 
