@@ -4,7 +4,7 @@ Implementato in C# / .NET 10 con Microsoft.Data.Sqlite: nessun database server a
 
 ## Cosa viene seguito
 
-Una questione può coinvolgere più parti e non avere un responsabile certo. Esempio inventato: una porta di rete non funziona, due fornitori devono capire chi interviene e Luca vuole verificarne l'esito.
+Una questione può coinvolgere più parti e non avere un responsabile certo. Esempio inventato: una porta di rete non funziona, due fornitori devono capire chi interviene e chi coordina vuole verificarne l'esito.
 
 - Titolo e risultato atteso.
 - Partecipanti multipli, “in attesa di” facoltativo (vuoto = da chiarire).

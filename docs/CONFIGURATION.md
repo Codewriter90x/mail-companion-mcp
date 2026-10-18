@@ -4,13 +4,12 @@
 
 Il bridge legge caselle reali e può segnarne i messaggi come letti. Non invia, sposta o elimina email. Funziona in locale senza OAuth. Le password non sono incluse nel repository né nell'immagine.
 
-## 1. Scaricare il progetto privato
+## 1. Scaricare il progetto
 
-Serve un account GitHub autorizzato al repository (per un collaboratore, il proprietario deve prima concedere accesso).
+Il repository è pubblico: per scaricare il codice non serve un account GitHub.
 
 ```sh
-gh auth login
-gh repo clone Codewriter90x/mail-companion-mcp
+git clone https://github.com/Codewriter90x/mail-companion-mcp.git
 cd mail-companion-mcp
 ```
 
