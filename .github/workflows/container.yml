@@ -3,7 +3,7 @@ name: Build and publish container
 on:
   push:
     branches: [main]
-    paths-ignore: ['**.md', 'docs/**']
+    paths-ignore: ['**.md', 'docs/**', 'scripts/audit-ghcr.py', '.github/workflows/image-audit.yml']
   workflow_dispatch:
 
 permissions:

@@ -14,7 +14,6 @@ import tarfile
 import tempfile
 import urllib.parse
 import urllib.request
-import zipfile
 
 PACKAGE = 'codewriter90x/mail-companion-mcp'
 REGISTRY = 'https://ghcr.io'
@@ -123,16 +122,19 @@ class Audit:
             if len(entries) != 1:
                 raise ValueError('Ambiguous dependency lock entry')
             entry = entries[0]
-            identity = package.lower()
             version = entry['resolved']
-            url = 'https://api.nuget.org/v3-flatcontainer/' + identity + '/' + version + '/' + identity + '.' + version + '.nupkg'
-            with urllib.request.urlopen(url, timeout=60) as response:
-                archive = response.read(16 * 1024 * 1024 + 1)
-            if len(archive) > 16 * 1024 * 1024 or base64.b64encode(hashlib.sha512(archive).digest()).decode() != entry['contentHash']:
-                raise ValueError('Upstream NuGet package hash mismatch')
+            # NuGet's lock hash excludes package signatures: do not compare it to
+            # SHA512 of the signed .nupkg archive. The workflow performs an isolated,
+            # locked restore from nuget.org; inspect exactly those verified files.
+            cache = Path(os.environ.get('GHCR_AUDIT_NUGET_CACHE', str(Path.home() / '.nuget/packages')))
+            folder = cache / package.lower() / version
+            metadata = json.loads((folder / '.nupkg.metadata').read_text())
+            if metadata.get('contentHash') != entry['contentHash'] or metadata.get('source', '').rstrip('/') != 'https://api.nuget.org/v3/index.json':
+                raise ValueError('NuGet-validated package content/source mismatch')
             filename = location.split('/')[-1]
-            with zipfile.ZipFile(io.BytesIO(archive)) as zipped:
-                hashes = {hashlib.sha256(zipped.read(n)).hexdigest() for n in zipped.namelist() if n.endswith('/' + filename)}
+            hashes = {hashlib.sha256(p.read_bytes()).hexdigest() for p in folder.rglob(filename) if p.is_file()}
+            if not hashes:
+                raise ValueError('Verified upstream assembly not found')
             self.vendor_package_hashes[package] = (hashes, version)
         hashes, version = self.vendor_package_hashes[package]
         return 'nuget.org/' + package + '/' + version if hashlib.sha256(data).hexdigest() in hashes else None

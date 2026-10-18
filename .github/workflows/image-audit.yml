@@ -13,10 +13,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Validate pinned upstream dependencies using NuGet
+        env:
+          NUGET_PACKAGES: ${{ runner.temp }}/audited-nuget
+        run: dotnet restore src/ArubaMail --locked-mode --source https://api.nuget.org/v3/index.json
       - name: Inspect all tagged images, metadata and layers
         env:
           GHCR_AUDIT_USER: ${{ github.actor }}
           GHCR_AUDIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_AUDIT_NUGET_CACHE: ${{ runner.temp }}/audited-nuget
           GHCR_AUDIT_REPORT: ${{ runner.temp }}/image-audit.json
         run: python3 scripts/audit-ghcr.py
       - name: Save redacted audit report
