@@ -2,7 +2,7 @@
 services:
   aruba-mail:
     build: .
-    image: aruba-mail-mcp:local
+    image: "${ARUBA_MAIL_IMAGE:-aruba-mail-mcp:local}"
     command: ["--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000"]
     user: "${LOCAL_UID:?Set LOCAL_UID to your host uid}:${LOCAL_GID:?Set LOCAL_GID to your host gid}"
     read_only: true
@@ -16,8 +16,8 @@ services:
       ARUBA_MAIL_ALLOWED_HOSTS: aruba-mail:8000
     volumes:
       - ./data:/data
-      - ./accounts.local.json:/app/accounts.local.json:ro
-      - ./mcp.token:/run/secrets/mcp.token:ro
+      - ${ARUBA_MAIL_CONFIG:-./accounts.local.json}:/app/accounts.local.json:ro
+      - ${ARUBA_MAIL_MCP_TOKEN_FILE:-./mcp.token}:/run/secrets/mcp.token:ro
     networks: [ai-local]
 networks:
   ai-local:

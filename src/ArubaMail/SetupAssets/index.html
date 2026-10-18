@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="it">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Configurazione posta · Mail Companion</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/setup.css"><script src="/setup.js" defer></script></head>
+<body>
+<header><a class="brand" href="/">Mail Companion<span>Configurazione locale</span></a><span class="privacy">I dati restano sul tuo computer</span></header>
+<main>
+<section id="login" class="login"><h1>Colleghiamo la tua posta.</h1><p>Apri il pannello dal comando di configurazione. Se lo hai già aperto, inserisci il codice locale di accesso.</p><form id="login-form"><label for="access-code">Codice di accesso</label><input id="access-code" type="password" autocomplete="off" required><button type="submit">Accedi</button></form><p class="hint">Il codice è generato automaticamente in setup.token. È diverso dalle password email e dal token MCP.</p></section>
+<div id="app" hidden>
+<div class="heading"><div><h1>La tua posta, collegata.</h1><p>Configura le caselle, poi scegli dove usarle.</p></div><div class="header-actions"><button id="reload" class="quiet" type="button">Ricarica</button><button id="logout" class="quiet" type="button">Blocca pannello</button></div></div>
+<nav aria-label="Configurazione"><button id="tab-accounts" type="button" aria-selected="true">1. Caselle</button><button id="tab-connection" type="button" aria-selected="false">2. Collegamento</button></nav>
+<section id="accounts-panel" class="workspace" aria-labelledby="tab-accounts">
+<aside><div class="aside-title"><h2>Le tue caselle</h2><span id="account-count">0</span></div><div id="account-list"></div><button type="button" id="new-account" class="secondary full">Aggiungi casella</button><p class="hint">IMAP con connessione TLS. Exchange con accesso OAuth non è ancora supportato.</p></aside>
+<div class="editor"><div class="section-head"><h2 id="account-title">Aggiungi una casella</h2><span id="saved-password" hidden>Password già salvata</span></div>
+<form id="account-form">
+<div class="grid"><div><label for="account-id">Nome della casella</label><input id="account-id" placeholder="Es. Ufficio" maxlength="100" required><p class="hint">Un nome univoco per riconoscerla nelle conversazioni.</p></div><div><label for="email">Indirizzo email</label><input id="email" type="email" placeholder="nome@azienda.it" maxlength="254" required></div></div>
+<div class="grid"><div><label for="username">Nome utente IMAP</label><input id="username" autocomplete="username" maxlength="512" required><p class="hint">Di solito coincide con l’indirizzo email.</p></div><div><label for="password">Password</label><input id="password" type="password" autocomplete="new-password" maxlength="4096"><p id="password-hint" class="hint">Inserisci la password della casella o quella applicativa.</p></div></div>
+<details open><summary>Server di posta</summary><div class="grid server"><div><label for="imap-host">Server IMAP</label><input id="imap-host" placeholder="Es. imaps.aruba.it" maxlength="253" required></div><div><label for="imap-port">Porta TLS</label><input id="imap-port" type="number" min="1" max="65535" value="993" required></div></div><p class="hint">La connessione cifrata TLS è sempre attiva.</p></details>
+<div class="actions"><button type="button" id="test-account" class="secondary">Prova connessione</button><button type="submit" id="save-account">Salva casella</button><button type="button" id="delete-account" class="danger" hidden>Rimuovi</button></div>
+<p class="hint">La prova verifica soltanto l’accesso: non legge né modifica email. Le password non sono restituite agli strumenti MCP.</p>
+</form></div></section>
+<section id="connection-panel" class="connection" aria-labelledby="tab-connection" hidden>
+<div class="editor"><h2>Dove vuoi usare la posta?</h2><form id="connection-form">
+<div class="grid"><div><label for="client">Applicazione</label><select id="client"><option value="codex">Codex</option><option value="open-webui">Open WebUI</option><option value="other">Altro client MCP</option></select></div><div><label for="transport">Collegamento MCP</label><select id="transport"><option value="stdio">Locale · stdio</option><option value="streamable-http">Streamable HTTP</option></select></div></div>
+<p id="transport-hint" class="info">Codex avvia il bridge in locale attraverso stdin/stdout. Non servono porte o token MCP.</p>
+<div id="http-options" class="grid" hidden><div id="http-port-field"><label for="http-port">Porta locale del bridge</label><input id="http-port" type="number" min="1024" max="65535" value="8000"></div><div id="webui-location-field"><label for="webui-location">Dove gira Open WebUI?</label><select id="webui-location"><option value="host">Direttamente sul computer</option><option value="docker">In un container Docker</option></select></div></div>
+<div class="actions"><button type="submit">Salva collegamento</button></div></form>
+<section id="instructions" class="instructions"><h3>Passi per collegarlo</h3><p id="instruction-note"></p><div id="endpoint-block" hidden><label>Indirizzo MCP</label><code id="endpoint"></code><button type="button" id="copy-token" class="secondary">Copia token MCP</button><p id="token-result" class="hint" role="status"></p><input id="token-fallback" type="password" readonly hidden aria-label="Token MCP da copiare manualmente"></div><label id="command-label">Comando per Codex</label><pre id="connect-command" tabindex="0"></pre><button type="button" id="copy-command" class="quiet">Copia comando</button><details><summary>Avvio Docker e alternative</summary><label>Codex con container stdio</label><pre id="docker-command" tabindex="0"></pre><label>Avvio HTTP locale con Docker</label><pre id="http-command" tabindex="0"></pre><p>Il nome dell’immagine resta aruba-mail-mcp. Per Open WebUI in Docker usa la rete privata e il compose descritti nella guida.</p></details><p class="hint">Il pannello salva le impostazioni e prepara le istruzioni. Non modifica le connessioni del client né riavvia processi già attivi. Le scadenze del registro sono consultabili su richiesta, senza notifiche automatiche.</p></section>
+</div></section>
+</div>
+<p id="status" role="status" aria-live="polite" hidden></p>
+</main><footer>Mail Companion · IMAP e registro locale SQLite</footer>
+</body></html>

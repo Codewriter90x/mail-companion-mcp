@@ -42,6 +42,9 @@ Lo script costruisce l'immagine `aruba-mail-mcp:local` dal clone ed esegue i tes
 
 ## 2. Inserire le credenziali localmente
 
+**Opzione guidata:** `./scripts/setup-container.sh` (Docker) oppure `./scripts/setup.sh` (.NET nativo) apre il pannello locale protetto. Gestisce caselle, prova connessione e scelta Codex/Open WebUI con stdio o HTTP. [Istruzioni complete](SETUP.md). I passaggi manuali seguenti restano disponibili come alternativa.
+
+
 ```sh
 cp accounts.example.json accounts.local.json
 chmod 600 accounts.local.json

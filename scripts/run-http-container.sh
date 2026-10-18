@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-config_file="${ARUBA_MAIL_CONFIG:-$project_dir/accounts.local.json}"
-token_file="${ARUBA_MAIL_MCP_TOKEN_FILE:-$project_dir/mcp.token}"
+default_config="$project_dir/accounts.local.json"
+if [[ -f "$project_dir/config/accounts.local.json" ]]; then default_config="$project_dir/config/accounts.local.json"; fi
+config_file="${ARUBA_MAIL_CONFIG:-$default_config}"
+token_file="${ARUBA_MAIL_MCP_TOKEN_FILE:-$(dirname -- "$config_file")/mcp.token}"
 for file in "$config_file" "$token_file"; do
   if [[ ! -f "$file" ]]; then
     printf 'Configurazione o token assente. Compila accounts.local.json ed esegui scripts/create-http-token.sh.\n' >&2

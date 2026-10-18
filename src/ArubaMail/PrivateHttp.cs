@@ -7,7 +7,7 @@ public static class PrivateHttp
 {
     public static byte[] LoadToken()
     {
-        var path = Environment.GetEnvironmentVariable("ARUBA_MAIL_MCP_TOKEN_FILE") ?? throw new MailError("Token non configurato.");
+        var path = Settings.HttpTokenPath;
         Settings.PrivateFile(path); var value = File.ReadAllText(path).Trim();
         if (value.Length is < 32 or > 512 || value.Any(c => c > 127 || char.IsWhiteSpace(c))) throw new MailError("Token non valido.");
         return Encoding.ASCII.GetBytes("Bearer " + value);

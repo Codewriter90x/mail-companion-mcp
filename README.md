@@ -19,6 +19,12 @@ Una questione può coinvolgere più aziende senza un responsabile certo. Segnare
 
 Invio, risposta, spostamento, eliminazione e creazione cartelle email restano fuori da questa versione.
 
+## Configurazione dal browser
+
+Non serve scrivere il file credenziali a mano. Avvia `./scripts/setup.sh` per il pannello nativo, oppure `./scripts/setup-container.sh` dopo la build/pull Docker. Si apre una pagina locale protetta per caselle, prova TLS/IMAP, client e trasporto MCP, con istruzioni pronte da copiare. [Guida al pannello](docs/SETUP.md).
+
+Il pannello non mostra le password già salvate, non modifica email e non abilita accesso remoto. I processi MCP mantengono i dodici strumenti esistenti.
+
 ## Avvio locale senza Docker
 
 Installare SDK .NET 10 per compilare; runtime ASP.NET Core 10 per eseguire il risultato.

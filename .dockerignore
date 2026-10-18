@@ -19,3 +19,8 @@
 # Directory exceptions above must not include local build outputs.
 **/bin/**
 **/obj/**
+
+!src/ArubaMail/SetupAssets/
+!src/ArubaMail/SetupAssets/*.html
+!src/ArubaMail/SetupAssets/*.css
+!src/ArubaMail/SetupAssets/*.js

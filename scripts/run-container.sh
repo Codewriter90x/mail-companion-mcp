@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-config_file="${ARUBA_MAIL_CONFIG:-$project_dir/accounts.local.json}"
+default_config="$project_dir/accounts.local.json"
+if [[ -f "$project_dir/config/accounts.local.json" ]]; then default_config="$project_dir/config/accounts.local.json"; fi
+config_file="${ARUBA_MAIL_CONFIG:-$default_config}"
 image_name="${ARUBA_MAIL_IMAGE:-aruba-mail-mcp:local}"
 if [[ ! -f "$config_file" ]]; then
-  printf 'Configurazione assente. Copia accounts.example.json in accounts.local.json, compila e applica chmod 600.\n' >&2
+  printf 'Configurazione assente. Avvia scripts/setup-container.sh oppure scripts/setup.sh.\n' >&2
   exit 1
 fi
 config_dir="$(cd -- "$(dirname -- "$config_file")" && pwd)"

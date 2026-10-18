@@ -16,7 +16,10 @@ public static class Settings
             if (File.Exists(Path.Combine(d.FullName, "accounts.example.json"))) return d.FullName;
         return AppContext.BaseDirectory;
     }
-    public static string ConfigPath => Environment.GetEnvironmentVariable("ARUBA_MAIL_CONFIG") ?? Path.Combine(Root, "accounts.local.json");
+    public static string ConfigPath => Environment.GetEnvironmentVariable("ARUBA_MAIL_CONFIG") ??
+        (File.Exists(Path.Combine(Root, "config", "accounts.local.json")) ? Path.Combine(Root, "config", "accounts.local.json") : Path.Combine(Root, "accounts.local.json"));
+    public static string ProfilePath => Environment.GetEnvironmentVariable("ARUBA_MAIL_PROFILE_PATH") ?? Path.Combine(Path.GetDirectoryName(ConfigPath)!, "connection.local.json");
+    public static string HttpTokenPath => Environment.GetEnvironmentVariable("ARUBA_MAIL_MCP_TOKEN_FILE") ?? Path.Combine(Path.GetDirectoryName(ConfigPath)!, "mcp.token");
     public static string DbPath => Environment.GetEnvironmentVariable("ARUBA_MAIL_DB_PATH") ?? Path.Combine(Root, "data", "followups.sqlite3");
     public static void PrivateFile(string path)
     {
@@ -28,12 +31,13 @@ public static class Settings
         if (OperatingSystem.IsWindows()) Directory.CreateDirectory(path);
         else Directory.CreateDirectory(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
     }
-    public static Dictionary<string, Account> Accounts()
+    public static Dictionary<string, Account> Accounts() => ReadAccounts(ConfigPath);
+    public static Dictionary<string, Account> ReadAccounts(string path, bool allowEmpty = false)
     {
         try
         {
-            PrivateFile(ConfigPath);
-            var accounts = JsonSerializer.Deserialize<AccountFile>(File.ReadAllText(ConfigPath), Json)?.Accounts ?? [];
+            PrivateFile(path);
+            var accounts = JsonSerializer.Deserialize<AccountFile>(File.ReadAllText(path), Json)?.Accounts ?? [];
             var result = new Dictionary<string, Account>(StringComparer.Ordinal);
             foreach (var account in accounts)
             {
@@ -41,7 +45,7 @@ public static class Settings
                     new[] { account.Email, account.Username, account.Password, account.ImapHost }.Any(string.IsNullOrWhiteSpace) || account.ImapPort is < 1 or > 65535)
                     throw new MailError("Configurazione incompleta o non valida.");
             }
-            if (result.Count == 0) throw new MailError("Nessuna casella configurata.");
+            if (!allowEmpty && result.Count == 0) throw new MailError("Nessuna casella configurata.");
             return result;
         }
         catch (MailError) { throw; }

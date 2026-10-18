@@ -24,3 +24,7 @@ data/
 **/obj/
 TestResults/
 artifacts/
+
+config/
+connection.local.json
+.setup.lock
