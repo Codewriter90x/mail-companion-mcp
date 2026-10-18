@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ArubaMail/ArubaMail.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ArubaMail.Tests/ArubaMail.Tests.csproj" />
+  </Folder>
+</Solution>

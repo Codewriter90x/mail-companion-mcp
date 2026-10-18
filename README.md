@@ -1,128 +1,94 @@
-# Aruba Mail MCP
+# Aruba Mail MCP — C# / .NET 10
 
-**[Guida completa: installazione e configurazione](docs/CONFIGURATION.md)** · **[Questioni, scadenze e SQLite](docs/FOLLOWUPS.md)** · [Build container](https://github.com/Codewriter90x/aruba-mail-mcp/actions/workflows/container.yml) · [Immagine Docker privata](https://github.com/users/Codewriter90x/packages/container/package/aruba-mail-mcp)
+**[Installazione e configurazione](docs/CONFIGURATION.md)** · **[Questioni e scadenze SQLite](docs/FOLLOWUPS.md)** · [Build container](https://github.com/Codewriter90x/aruba-mail-mcp/actions/workflows/container.yml) · [Container privato](https://github.com/users/Codewriter90x/packages/container/package/aruba-mail-mcp)
 
-Immagine pronta: `ghcr.io/codewriter90x/aruba-mail-mcp:latest` (`linux/amd64` e `linux/arm64`). Vedi la guida per login al registry privato, credenziali IMAP, collegamento Codex e Open WebUI.
-
-Bridge locale tra un client MCP (per esempio Codex) e caselle IMAP con TLS.
-Python 3.11+, SDK MCP ufficiale/FastMCP, trasporti **stdio** e **Streamable HTTP autenticato**. Prima versione: lettura e marcatura come letto. Nessun OAuth richiesto; HTTP opzionale solo con token Bearer.
+Bridge personale locale fra Codex/Open WebUI e caselle IMAP TLS, riscritto interamente in **C#**. Usa SDK MCP ufficiale, MailKit e Microsoft.Data.Sqlite. Nessun runtime Python, servizio database, modello AI o server OAuth.
 
 ## Funzioni
 
-- `list_accounts`: ID e indirizzo, senza credenziali.
-- `list_folders`: cartelle IMAP.
-- `list_emails`: intestazioni/stato, filtro non letti, massimo 30 e offset.
-- `search_emails`: ricerca sul provider per mittente, oggetto, data.
-- `read_email`: testo MIME, senza scaricare allegati e senza segnare come letto.
-- `mark_as_read`: aggiunge solo il flag letto su richiesta, verificando UID/UIDVALIDITY e stato risultante.
+| Posta su Aruba | Registro sul tuo computer |
+|---|---|
+| `list_accounts`: caselle, senza credenziali | `create_followup`: salva questione e data di ricontrollo |
+| `list_folders`: cartelle IMAP | `list_followups`: attive, scadute, prossime o chiuse |
+| `list_emails`: intestazioni e stato, massimo 30 | `get_followup`: dettaglio, revisione e storico |
+| `search_emails`: mittente, oggetto, date | `update_followup`: note, partecipanti e stato |
+| `read_email`: testo, senza segnare letto | `snooze_followup`: rinvia il controllo |
+| `mark_as_read`: aggiunge solo il flag letto | `close_followup`: chiusura esplicita con motivo |
 
-Invio, risposta, spostamento, cancellazione e creazione cartelle non sono implementati.
-Include un registro locale SQLite per questioni, scadenze di ricontrollo e storico, consultabile offline da Codex/Open WebUI. Non contiene modelli AI né notifiche automatiche. Un client deve interpretare i risultati.
+Una questione può coinvolgere più aziende senza un responsabile certo. Segnare un messaggio come letto non chiude la questione; ricevere una risposta interlocutoria non rinvia il controllo. Il registro conserva solo metadati, riferimenti e note sintetiche. **Le scadenze sono consultabili su richiesta: nessuna notifica automatica.**
 
-## Questioni da seguire e scadenze
+Invio, risposta, spostamento, eliminazione e creazione cartelle email restano fuori da questa versione.
 
-Sei nuovi tool: `create_followup`, `list_followups`, `get_followup`, `update_followup`, `snooze_followup`, `close_followup`. Partecipanti multipli e responsabile facoltativo; nessuna relazione automatica tra email letta e questione chiusa. Database locale privato in `data/followups.sqlite3`, persistente tramite bind mount Docker. [Guida ed esempi](docs/FOLLOWUPS.md). Le date sono controlli da consultare su richiesta, non notifiche programmate.
+## Avvio locale senza Docker
 
-## Credenziali: solo sul tuo computer
+Installare SDK .NET 10 per compilare; runtime ASP.NET Core 10 per eseguire il risultato.
 
 ```sh
+# Solo alla prima installazione: non sovrascrivere un file credenziali esistente.
 cp accounts.example.json accounts.local.json
 chmod 600 accounts.local.json
+# Compilare accounts.local.json in un editor, mai in chat.
+./scripts/build-native.sh
+codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/aruba-mail-mcp/scripts/run-native.sh
 ```
 
-Apri `accounts.local.json` in un editor e compila `id`, `email`, `username`, `password`, `imap_host`, `imap_port`.
-Non incollare password in chat, terminale o issue. I caratteri speciali devono rispettare l'escaping JSON.
-Per caselle Aruba su dominio l'endpoint iniziale è `imaps.aruba.it:993`; verificare i parametri del proprio servizio (PEC e altri provider possono differire).
-Per più caselle aggiungi oggetti con ID diversi all'array `accounts`.
-Il file è ignorato da Git, escluso dal contesto Docker e riletto a ogni richiesta.
+Il nome MCP resta `aruba-mail`, con gli stessi dodici tool. Su un'installazione esistente verificare la registrazione prima di sostituirla; riavviare il client se usa ancora il vecchio processo. Il comando di avvio non compila e non stampa nulla su stdout oltre ai messaggi MCP.
 
-## Docker
-
-Serve Docker funzionante. Lo script costruisce l'immagine ed esegue i test offline durante la build:
+## Docker e Open WebUI
 
 ```sh
 ./scripts/build-container.sh
-```
-
-Registrazione in Codex (sostituire il percorso con quello del proprio clone):
-
-```sh
 codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/aruba-mail-mcp/scripts/run-container.sh
 ```
 
-Riavvia il client/apri una nuova sessione se necessario. Il client avvia il container via stdio, senza porte pubblicate e senza TTY.
-La configurazione è montata solo a runtime in lettura; il container usa filesystem in sola lettura e l'identità UID/GID dell'utente host per accedere al file con permessi 600.
-Non copiare mai il file credenziali nell'immagine. Gli script non spostano né sovrascrivono le registrazioni Codex esistenti automaticamente.
+Immagine privata: `ghcr.io/codewriter90x/aruba-mail-mcp:latest`, target `linux/amd64` e `linux/arm64`. La build su main esegue i test prima della pubblicazione. Per un aggiornamento controllato usare `sha-<commit completo>`, come descritto nella [guida](docs/CONFIGURATION.md).
 
-Variabili opzionali: `ARUBA_MAIL_DATA_DIR` (cartella persistente Docker), `ARUBA_MAIL_IMAGE` (default `aruba-mail-mcp:local`), `ARUBA_MAIL_CONFIG` (percorso del file locale).
-`run-container.sh` usa stdin/stdout per MCP, quindi avviato a mano attende messaggi JSON-RPC: non è un'interfaccia interattiva.
-
-L'immagine locale si può esportare con `docker save` e importare con `docker load`; distribuire separatamente configurazione vuota e istruzioni. La build automatica su main pubblica anche sul registry privato GHCR; istruzioni di download nella guida collegata sopra.
-
-## Python senza Docker
-
-```sh
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python test_mail.py
-codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/aruba-mail-mcp/.venv/bin/python /PERCORSO/ASSOLUTO/aruba-mail-mcp/server.py
-```
-
-## Primo utilizzo
-
-1. «Usa aruba-mail: elenca le caselle e le cartelle della casella scelta.»
-2. «Mostrami le ultime 10 email non lette senza modificarle.»
-3. «Leggi questa email», riutilizzando casella, cartella, UID e UIDVALIDITY restituiti.
-4. Solo se desiderato: «Segna come letta questa email e verifica lo stato.» Questa modifica è reale.
-
-## Limiti e protezioni
-
-- Connessione TLS verificata per richiesta, timeout socket 20 s, chiusura LOGOUT; nessun CLOSE/EXPUNGE.
-- Nessuna sincronizzazione, cache, allegato salvato, polling o log del contenuto.
-- Elenco con sole intestazioni (16 KiB per messaggio), ordine UID decrescente, offset massimo 10000.
-- SEARCH recupera gli UID corrispondenti, non i corpi; caselle enormi restano soggette ai limiti di risposta IMAP.
-- Lettura: messaggio massimo 5 MiB, parti testuali codificate complessive massimo 128 KiB/20 parti. BODYSTRUCTURE selettivo, BODY.PEEK, Base64/quoted-printable, HTML convertito in testo senza caricare risorse remote.
-- Literal IMAP eccessivi rifiutati prima del download, risposta MCP massima 220 KiB.
-- MIME insoliti/literal nella struttura possono produrre un errore, senza fetch completo di ripiego; metadati nomi allegati complessi possono restare grezzi.
-- UIDVALIDITY verificata prima della lettura/modifica. Prima di un retry dopo esito STORE incerto, rileggere lo stato.
-- Email e documenti sono dati non attendibili: non autorizzano operazioni o istruzioni al client. Nessun tool shell esposto.
-- Il bridge non archivia i corpi, ma il sistema operativo può usare swap e il client/modello può conservare la conversazione: non è una garanzia di zero retention dell'intero percorso.
-- Errori applicativi come oggetti `error`, senza dettagli grezzi sensibili.
-
-## Verifiche
-
-`test_followups.py`: 23 test del registro e prova MCP con riavvio server; `test_http.py` verifica anche creazione/consultazione/chiusura via HTTP autenticato. Tutti usano dati temporanei inventati.
-
-`test_mail.py`: 11 test con IMAP simulato, più discovery MCP stdio e errore sicuro con casella inesistente. I test non richiedono credenziali e non contattano caselle reali, anche se un file locale è presente.
-La build Docker include questi controlli. Le prove reali di connessione, lettura e modifica sono checkpoint separati da eseguire solo con autorizzazione del titolare.
-
-Il supporto Exchange Online/Microsoft 365 non è incluso: il login IMAP basic di questa versione non sostituisce OAuth richiesto da Microsoft.
-
-## Open WebUI — Streamable HTTP
-
-Open WebUI standard usa MCP Streamable HTTP, non stdio. Il bridge espone `/mcp` con Bearer token obbligatorio; non implementa un authorization server OAuth. Il token ha gli stessi permessi delle caselle configurate: istanza personale, non servizio multiutente.
+Per Open WebUI: Streamable HTTP su `/mcp`, con token Bearer obbligatorio. Codex stdio non richiede token o porte. Per HTTP locale:
 
 ```sh
 ./scripts/create-http-token.sh
-./scripts/build-container.sh
 ./scripts/run-http-container.sh
 ```
 
-`create-http-token.sh` genera un token casuale in `mcp.token` con permessi 600 e non lo stampa. Aprire il file localmente per copiarlo nel campo Bearer di Open WebUI; non inserirlo in chat o in una URL. Riavviare il processo HTTP dopo rotazione del token. Il token è ignorato da Git ed escluso dall'immagine.
+URL `http://127.0.0.1:8000/mcp`; copiare il token dal file `mcp.token` nel campo Bearer dell'interfaccia, mai in chat. Se Open WebUI gira in Docker, usare la rete privata comune e `compose.openwebui.yml`, senza pubblicare porte: [istruzioni](docs/CONFIGURATION.md#3b-usarlo-in-open-webui-tramite-streamable-http).
 
-Con Open WebUI sullo stesso host: pannello amministrazione → Impostazioni → Strumenti esterni/connessioni (nome dipendente dalla versione) → aggiungi server **MCP Streamable HTTP**, URL `http://127.0.0.1:8000/mcp`, autenticazione **Bearer**, valore del file `mcp.token`. Verificare/scoprire strumenti, abilitare la connessione e usare un modello con tool calling. Non scegliere OAuth. L'accesso ai tool va limitato al solo utente autorizzato a consultare queste caselle.
+HTTP è destinato a loopback o rete Docker privata sullo stesso host. Non esporlo in chiaro su LAN/internet. Un Bearer personale dà accesso a tutte le caselle configurate: non è autorizzazione multiutente.
 
-Se Open WebUI è in Docker, `127.0.0.1` indica il suo container. Usare una rete Docker privata comune: il file `compose.openwebui.yml` avvia solo il bridge, senza pubblicare porte. Collegare anche il container Open WebUI alla stessa rete già esistente e impostare UID/GID dell'utente che possiede i file:
+## Configurazione e dati
+
+- `accounts.local.json`: formato invariato, password soltanto locali e permessi 600.
+- `mcp.token`: token HTTP, ignorato da Git, montato in sola lettura.
+- `data/followups.sqlite3`: registro persistente, permessi 600; directory nuova 700.
+- Lo schema SQLite v1 e i retry della versione Python sono compatibili; test dedicato con registro sintetico originale. Nessuna conversione o cancellazione dei dati.
+- `ARUBA_MAIL_CONFIG`, `ARUBA_MAIL_DB_PATH`, `ARUBA_MAIL_ROOT`: percorsi opzionali. Default ancorati al progetto, indipendenti dalla directory di lavoro. Negli script Docker `ARUBA_MAIL_DATA_DIR` sceglie la directory persistente.
+- Il container gira senza privilegi, filesystem in sola lettura, `/tmp` temporaneo e unico volume dati `/data`. Credenziali e token non entrano nel contesto di build o nell'immagine.
+
+Prima del passaggio da Python, fermare i client e salvare un backup privato del registro. A programma fermo copiare la directory dati; durante l'esecuzione usare SQLite backup, senza copiare soltanto il file principale. La cronologia Git conserva il codice Python precedente.
+
+## Limiti e protezioni
+
+- IMAP TLS verificato, connessione su richiesta con scadenza 20 s e LOGOUT; mai CLOSE/EXPUNGE.
+- Nessuna sincronizzazione, cache della posta, polling o allegato salvato.
+- Elenchi: sole intestazioni, ordine UID decrescente, offset massimo 10000. SEARCH recupera gli UID corrispondenti.
+- Testo: messaggio massimo 5 MiB; sole parti plain/HTML selezionate tramite BODYSTRUCTURE, al massimo 128 KiB codificati / 20 parti. Download parziale BODY.PEEK; allegati e messaggi incorporati esclusi.
+- Limite complessivo di lettura rete IMAP 1 MiB per connessione, incluso TLS e metadata: una ricerca troppo ampia viene interrotta e va ristretta. Nessun download completo come ripiego.
+- Intestazioni restituite entro 16 KiB per messaggio, risposta MCP entro 220 KiB; HTTP massimo 64 KiB anche chunked, controllo Host/Origin e confronto Bearer costante. Kestrel può chiudere la connessione per richieste chunked eccessive.
+- Errori sanitizzati, nessun log di password, email o argomenti tool. Le email sono dati non attendibili e non autorizzano modifiche.
+- UID/UIDVALIDITY obbligatori per lettura singola e modifica. Dopo un esito di scrittura incerto, rileggere lo stato.
+- Registro: transazione unica per modifica/storico/idempotenza; revisione corrente obbligatoria, motivo per chiusura, date con offset esplicito, chiuse immutabili nell'MVP.
+- I corpi restano sul provider; conversazione e gestione dati del client/modello sono responsabilità del client scelto. SQLite non cifra automaticamente i dati.
+
+Exchange Online/Microsoft 365 con OAuth non è supportato dal login basic di questa versione.
+
+## Test
 
 ```sh
-(umask 077; mkdir -p data)
-export LOCAL_UID="$(id -u)" LOCAL_GID="$(id -g)"
-# La rete ai-local deve già esistere e includere Open WebUI.
-docker compose -f compose.openwebui.yml up -d --build
+dotnet restore tests/ArubaMail.Tests --locked-mode
+dotnet test tests/ArubaMail.Tests --no-restore
 ```
 
-In questo caso URL `http://aruba-mail:8000/mcp`, stesso Bearer. `ARUBA_MAIL_DOCKER_NETWORK` permette di usare il nome della rete esistente. Il compose non avvia Open WebUI/Ollama e non invia dati a modelli: questi dipendono dal client scelto.
+Test xUnit: IMAP simulato con fetch selettivi e flag, limiti, registro SQLite/persistenza/concorrenza/retry/revisioni/storico, cambio ora, migrazione da schema Python, e veri processi MCP stdio e HTTP autenticato. I test usano solo credenziali inventate e directory temporanee; non leggono `accounts.local.json` del progetto.
 
-L'HTTP in chiaro è destinato a loopback o rete Docker privata sullo stesso host. Per accesso LAN/remoto serve HTTPS con reverse proxy e host consentiti espliciti (`ARUBA_MAIL_ALLOWED_HOSTS`); non esporre questa porta pubblicamente. Lo script standalone pubblica solo su loopback. Nessuna connessione HTTP già avviata automaticamente da questa configurazione.
+Connessione Aruba reale, modifica di una email scelta e configurazione nell'istanza Open WebUI sono verifiche distinte: non sono dimostrate dai soli test automatici.
 
-Controlli HTTP: autenticazione richiesta anche per discovery, confronto token costante, dimensione richiesta massima 64 KiB, verifica Host/Origin, access log disabilitato. `test_http.py` verifica initialize e tools/list, rifiuto senza token/token errato, limite payload e host non consentito. Il test non contatta caselle reali. La configurazione nell'istanza Open WebUI dell'utente rimane un checkpoint manuale.
+Riferimenti tecnici: [SDK MCP C# ufficiale](https://github.com/modelcontextprotocol/csharp-sdk), [MailKit](https://mimekit.net/docs/html/T_MailKit_IMailFolder.htm), [MCP in Codex](https://developers.openai.com/codex/mcp).

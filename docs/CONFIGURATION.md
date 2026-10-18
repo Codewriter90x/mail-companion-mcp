@@ -74,6 +74,17 @@ codex mcp get aruba-mail
 Se esiste già una registrazione `aruba-mail`, verificarla prima di sostituirla. Aprire una nuova chat/riavviare il client se necessario.
 Non avviare il server HTTP per questo uso: Codex crea il container e usa stdin/stdout. Nessuna porta viene pubblicata.
 
+### Senza Docker: C# nativo
+
+Installare SDK .NET 10, poi:
+
+```sh
+./scripts/build-native.sh
+codex mcp add aruba-mail -- /PERCORSO/ASSOLUTO/aruba-mail-mcp/scripts/run-native.sh
+```
+
+La configurazione JSON e il registro SQLite sono gli stessi della versione Python. Nessun runtime Python richiesto. `ARUBA_MAIL_DOTNET` può indicare il percorso assoluto di `dotnet` se il client grafico non lo trova nel PATH. Durante un aggiornamento conservare credenziali e directory dati; prima salvare un backup del registro a client fermo. I nomi dei dodici strumenti restano invariati.
+
 ## 3B. Usarlo in Open WebUI tramite Streamable HTTP
 
 Serve Open WebUI con supporto MCP Streamable HTTP e un modello capace di tool calling. Token MCP e password email sono due segreti diversi.

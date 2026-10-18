@@ -1,6 +1,6 @@
 # Questioni da seguire — registro locale SQLite
 
-Implementato in Python con `sqlite3` della libreria standard: nessun nuovo database server o dipendenza. Il registro funziona senza internet e senza credenziali IMAP. I client Codex e Open WebUI devono essere riavviati/aggiornare la discovery dei tool dopo l'aggiornamento.
+Implementato in C# / .NET 10 con Microsoft.Data.Sqlite: nessun database server aggiuntivo. Il registro funziona senza internet e senza credenziali IMAP. I client Codex e Open WebUI devono essere riavviati/aggiornare la discovery dei tool dopo l'aggiornamento.
 
 ## Cosa viene seguito
 
@@ -62,7 +62,7 @@ Una questione chiusa è consultabile ma non modificabile in questa prima version
 
 ## Dove sono i dati
 
-Python locale: `data/followups.sqlite3` accanto ai sorgenti. Creazione alla prima scrittura; le letture di un registro assente restituiscono un elenco vuoto senza creare file.
+Esecuzione locale C#: `data/followups.sqlite3` accanto ai sorgenti. Creazione alla prima scrittura; le letture di un registro assente restituiscono un elenco vuoto senza creare file.
 
 Override: `ARUBA_MAIL_DB_PATH` per un file SQLite su disco locale. La cartella deve essere scrivibile e il file avere permessi 600. Per cartelle nuove il bridge usa permessi 700. SQLite usa transazioni atomiche; storico, mutazione e chiave di idempotenza vengono salvati nella stessa transazione. Una versione database futura/sconosciuta viene rifiutata senza modifiche.
 
@@ -98,9 +98,8 @@ Il client può dire “controllo salvato per quella data”, ma non “ti avvise
 ## Test
 
 ```sh
-.venv/bin/python test_mail.py
-.venv/bin/python test_http.py
-.venv/bin/python test_followups.py
+dotnet restore tests/ArubaMail.Tests --locked-mode
+dotnet test tests/ArubaMail.Tests --no-restore
 ```
 
 Test su database temporanei: persistenza in un nuovo processo, più parti senza responsabile, retry/concorrenza, revisione superata, storico e paginazione, confini temporali e cambio ora, rinvio, motivo di chiusura, transazioni/permessi/versione DB, riferimenti invalidi, assenza di accessi IMAP e indipendenza da `mark_as_read`. Prove MCP stdio con riavvio server e HTTP autenticato. Nessuna password o casella reale necessaria.

@@ -1,12 +1,21 @@
-# Only source needed to build; no configuration, email data or Git history.
+# Source allowlist: never include credentials, token, mailbox or follow-up data.
 **
 !Dockerfile
-!requirements.txt
-!config.py
-!mail_client.py
-!server.py
-!test_mail.py
-!http_transport.py
-!test_http.py
-!followups.py
-!test_followups.py
+!global.json
+!Directory.Build.props
+!accounts.example.json
+!src/
+!src/ArubaMail/
+!src/ArubaMail/*.cs
+!src/ArubaMail/*.csproj
+!src/ArubaMail/packages.lock.json
+!tests/
+!tests/ArubaMail.Tests/
+!tests/ArubaMail.Tests/*.cs
+!tests/ArubaMail.Tests/*.csproj
+!tests/ArubaMail.Tests/packages.lock.json
+!tests/ArubaMail.Tests/Fixtures/
+!tests/ArubaMail.Tests/Fixtures/*.sql
+# Directory exceptions above must not include local build outputs.
+**/bin/**
+**/obj/**
