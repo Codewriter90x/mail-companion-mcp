@@ -1,5 +1,9 @@
 # Aruba Mail MCP
 
+**[Guida completa: installazione e configurazione](docs/CONFIGURATION.md)** · [Build container](https://github.com/Codewriter90x/aruba-mail-mcp/actions/workflows/container.yml) · [Immagine Docker privata](https://github.com/users/Codewriter90x/packages/container/package/aruba-mail-mcp)
+
+Immagine pronta: `ghcr.io/codewriter90x/aruba-mail-mcp:latest` (`linux/amd64` e `linux/arm64`). Vedi la guida per login al registry privato, credenziali IMAP, collegamento Codex e Open WebUI.
+
 Bridge locale tra un client MCP (per esempio Codex) e caselle IMAP con TLS.
 Python 3.11+, SDK MCP ufficiale/FastMCP, trasporti **stdio** e **Streamable HTTP autenticato**. Prima versione: lettura e marcatura come letto. Nessun OAuth richiesto; HTTP opzionale solo con token Bearer.
 
@@ -49,7 +53,7 @@ Non copiare mai il file credenziali nell'immagine. Gli script non spostano né s
 Variabili opzionali: `ARUBA_MAIL_IMAGE` (default `aruba-mail-mcp:local`), `ARUBA_MAIL_CONFIG` (percorso del file locale).
 `run-container.sh` usa stdin/stdout per MCP, quindi avviato a mano attende messaggi JSON-RPC: non è un'interfaccia interattiva.
 
-L'immagine locale si può esportare con `docker save` e importare con `docker load`; distribuire separatamente configurazione vuota e istruzioni. Non è pubblicata su alcun registry.
+L'immagine locale si può esportare con `docker save` e importare con `docker load`; distribuire separatamente configurazione vuota e istruzioni. La build automatica su main pubblica anche sul registry privato GHCR; istruzioni di download nella guida collegata sopra.
 
 ## Python senza Docker
 
